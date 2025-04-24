@@ -5,6 +5,8 @@ import model.User;
 import server.rmi.ChatServer;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -20,12 +22,19 @@ public class ChatWindow extends JFrame {
     private JLabel statusLabel;
     private JPanel userListPanel;
     private JScrollPane chatScrollPane;
-    
+
+    private JLabel userLabel;
+
+
+
     private final User currentUser;
     private final ChatClientImpl chatClient;
     private final ChatServer chatServer;
     private final ImageIcon userIcon;
-    
+
+
+
+
     public ChatWindow(User user, ChatServer server, ChatClientImpl client) {
         this.currentUser = user;
         this.chatServer = server;
@@ -77,21 +86,54 @@ public class ChatWindow extends JFrame {
         chatArea.setEditable(false);
         chatArea.setLineWrap(true);
         chatArea.setWrapStyleWord(true);
-        
+
+        chatArea.setBackground(new Color(95,158,160));
+        chatArea.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+
+
         chatScrollPane = new JScrollPane(chatArea);
-        
+
         messageField = new JTextField(20);
+        messageField.setBounds(5,5,5,5);
+        messageField.setBackground(new Color	(248,248,255));
+        messageField.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.DARK_GRAY, 3, true),
+                BorderFactory.createEmptyBorder(8, 12, 8, 12)
+        ));
+
         messageField.addActionListener(e -> sendMessage());
         
         sendButton = new JButton("Send");
+        sendButton.setBackground(new Color(176, 196, 222));
+        sendButton.setForeground(Color.BLACK);
+        sendButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        sendButton.setFocusPainted(false);
+        sendButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        sendButton.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(0, 105, 217)),
+                BorderFactory.createEmptyBorder(8, 82, 8, 82)
+        ));
         sendButton.addActionListener(e -> sendMessage());
         
         statusLabel = new JLabel("Connected as: " + currentUser.getNickname());
         statusLabel.setForeground(Color.BLUE);
-        
+
+
+        TitledBorder titledBorder = BorderFactory.createTitledBorder("Online Users");
+        titledBorder.setTitleColor(Color.WHITE);
+        titledBorder.setTitleFont(new Font("Segoe UI", Font.BOLD, 16));
+
         userListPanel = new JPanel();
-        userListPanel.setBorder(BorderFactory.createTitledBorder("Online Users"));
+        userListPanel.setBorder(titledBorder);
         userListPanel.setLayout(new BoxLayout(userListPanel, BoxLayout.Y_AXIS));
+        userListPanel.setBackground(new Color(0, 128, 128));
+
+
+        JLabel userLabel = new JLabel(currentUser.getNickname());
+        userLabel.setIcon(userIcon);
+        userLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        userListPanel.add(userLabel);
+
     }
     
     private void layoutComponents() {
@@ -118,7 +160,7 @@ public class ChatWindow extends JFrame {
     private void sendMessage() {
         String message = messageField.getText().trim();
         if (message.isEmpty()) return;
-        
+
         try {
             if (chatServer != null) {
                 chatServer.sendMessage(message, currentUser.getNickname());
@@ -155,7 +197,7 @@ public class ChatWindow extends JFrame {
             dispose();
         }
     }
-    
+
     public void appendToChatArea(String message) {
         if (chatArea != null) {
             chatArea.append(message + "\n");
@@ -173,6 +215,14 @@ public class ChatWindow extends JFrame {
                 JLabel userLabel = new JLabel(user);
                 userLabel.setIcon(userIcon);
                 userLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+                //userLabel.setForeground(Color.YELLOW);
+                userLabel.setForeground(new Color(209, 209, 218));
+                userLabel.setFont(new Font("Arial", Font.BOLD, 14));
+
+                if (user.equals(currentUser.getNickname())) {
+                    userLabel.setForeground(Color.YELLOW);
+                }
+
                 userListPanel.add(userLabel);
             }
         }

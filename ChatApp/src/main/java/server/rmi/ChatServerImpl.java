@@ -3,7 +3,6 @@ package server.rmi;
 import dao.ChatDAO;
 import dao.UserDAO;
 import model.Chat;
-import server.FTPUploader;
 import server.observer.ChatClient;
 import server.observer.ChatSubscriptionManager;
 
@@ -178,20 +177,6 @@ public class ChatServerImpl extends UnicastRemoteObject implements ChatServer {
             }
 
             System.out.println("✅ Log saved locally: " + logFile.getAbsolutePath());
-
-            // Upload to FTP
-            FTPUploader uploader = new FTPUploader("eu-central-1.sftpcloud.io", 21, "009fc42fab6d456fab102d4c86c991df", "FkgDvxNJHs6LmAYXD484HuxSkT2l8cJE");
-            boolean uploaded = uploader.uploadFile(
-                    logFile.getAbsolutePath(),
-                    "/chatlogs",                // Remote directory
-                    fileName                    // Remote file name
-            );
-
-            if (uploaded) {
-                System.out.println("✅ Log file uploaded to FTP.");
-            } else {
-                System.out.println("❌ Failed to upload log to FTP.");
-            }
 
         } catch (IOException e) {
             System.err.println("Error saving or uploading chat log: " + e.getMessage());

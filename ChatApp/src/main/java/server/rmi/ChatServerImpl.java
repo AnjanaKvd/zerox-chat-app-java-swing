@@ -45,7 +45,7 @@ public class ChatServerImpl extends UnicastRemoteObject implements ChatServer {
         this.userDAO = userDAO;
         this.subscriptionManager = subscriptionManager;
         connectedClients = new ConcurrentHashMap<>();
-        sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        sdf = new SimpleDateFormat("yyyy-MM-dd : hh:mm a");
         chatLog = new ArrayList<>();
         chatActive = false;
     }
@@ -59,7 +59,7 @@ public class ChatServerImpl extends UnicastRemoteObject implements ChatServer {
         }
         
         // Notify all clients about the new user
-        String joinMessage = nickname + " has joined : " + getCurrentTime();
+        String joinMessage = nickname + " has joined  " + getCurrentTime();
         broadcastMessage(joinMessage);
         
         // Update user list for all clients
@@ -86,7 +86,7 @@ public class ChatServerImpl extends UnicastRemoteObject implements ChatServer {
             endChat();
         } else {
             // Notify remaining clients that a user left
-            String leaveMessage = nickname + " left : " + getCurrentTime();
+            String leaveMessage = nickname + " left " + getCurrentTime();
             broadcastMessage(leaveMessage);
             
             // Update user list for remaining clients
@@ -128,7 +128,8 @@ public class ChatServerImpl extends UnicastRemoteObject implements ChatServer {
         chatDAO.saveChat(currentChat);
         
         // Log start time
-        chatLog.add("Chat started at: " + chatStartTime);
+        chatLog.add("Chat started at " + chatStartTime);
+
         
         // Notify all connected clients
         for (ChatClient client : connectedClients.keySet()) {
@@ -200,6 +201,12 @@ public class ChatServerImpl extends UnicastRemoteObject implements ChatServer {
 
 
     private String getCurrentTime() {
-        return sdf.format(new Date());
+        SimpleDateFormat sdf = new SimpleDateFormat("hh:mm a");
+        Date now = new Date();
+        return ":"+ sdf.format(now).toLowerCase() ;
     }
+
+//    private String getCurrentTime() {
+//        return sdf.format(new Date());
+//    }
 }

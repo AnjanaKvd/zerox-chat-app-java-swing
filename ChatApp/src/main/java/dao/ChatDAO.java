@@ -1,6 +1,7 @@
 package dao;
 
 import model.Chat;
+import model.User;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.query.Query;
@@ -9,6 +10,7 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 import javax.persistence.criteria.Predicate;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ChatDAO {
@@ -107,6 +109,58 @@ public class ChatDAO {
                 session.delete(chat);
             }
             
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            throw e;
+        }
+    }
+
+    public List<Chat> getSubscribedChats(int userId) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            User user = session.get(User.class, userId);
+            if (user != null) {
+                List<Chat> chats = new ArrayList<>(user.getSubscribedChats());
+                return chats;
+            }
+            return java.util.Collections.emptyList();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return java.util.Collections.emptyList();
+        }
+    }
+
+    public void subscribeUserToChat(int userId, int chatId) {
+        Transaction transaction = null;
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            transaction = session.beginTransaction();
+            User user = session.get(User.class, userId);
+            Chat chat = session.get(Chat.class, chatId);
+            if (user != null && chat != null) {
+                user.addSubscription(chat);
+                session.update(user);
+            }
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            throw e;
+        }
+    }
+
+    public void unsubscribeUserFromChat(int userId, int chatId) {
+        Transaction transaction = null;
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            transaction = session.beginTransaction();
+            User user = session.get(User.class, userId);
+            Chat chat = session.get(Chat.class, chatId);
+            if (user != null && chat != null) {
+                user.removeSubscription(chat);
+                session.update(user);
+            }
             transaction.commit();
         } catch (Exception e) {
             if (transaction != null) {

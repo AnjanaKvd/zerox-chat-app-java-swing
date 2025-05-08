@@ -1,6 +1,7 @@
 package client.gui;
 
 import client.services.ChatClientImpl;
+import model.Chat;
 import model.User;
 import server.rmi.ChatServer;
 
@@ -25,11 +26,13 @@ public class ChatWindow extends JFrame {
     private final ChatClientImpl chatClient;
     private final ChatServer chatServer;
     private final ImageIcon userIcon;
+    private Chat currentChat;
     
-    public ChatWindow(User user, ChatServer server, ChatClientImpl client) {
+    public ChatWindow(User user, ChatServer server, ChatClientImpl client, Chat chat) {
         this.currentUser = user;
         this.chatServer = server;
         this.chatClient = client;
+        this.currentChat = chat;
         this.userIcon = new ImageIcon(createUserIcon(16));
         
         // Set the chat window in the client
@@ -38,7 +41,7 @@ public class ChatWindow extends JFrame {
         }
         
         // Setup window
-        setTitle("Chat - " + user.getNickname());
+        setTitle("Chat - " + (chat.getAdmin() != null ? chat.getAdmin().getNickname() : "Chat #" + chat.getId()));
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -70,6 +73,17 @@ public class ChatWindow extends JFrame {
         }
         
         setVisible(true);
+    }
+    
+    public ChatWindow() {
+        // Initialize required fields with null values
+        this.currentUser = null;
+        this.chatServer = null;
+        this.chatClient = null;
+        this.userIcon = null;
+        
+        // Don't perform any UI initialization or server connection
+        // This constructor is only for subclassing
     }
     
     private void initComponents() {
@@ -165,19 +179,18 @@ public class ChatWindow extends JFrame {
     }
     
     public void updateUserList(String[] users) {
-        if (userListPanel == null) return;
-        
-        userListPanel.removeAll();
-        if (users != null) {
+        if (userListPanel != null) {
+            userListPanel.removeAll();
+            
             for (String user : users) {
-                JLabel userLabel = new JLabel(user);
-                userLabel.setIcon(userIcon);
-                userLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+                JLabel userLabel = new JLabel(user, userIcon, JLabel.LEFT);
+                userLabel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
                 userListPanel.add(userLabel);
             }
+            
+            userListPanel.revalidate();
+            userListPanel.repaint();
         }
-        userListPanel.revalidate();
-        userListPanel.repaint();
     }
     
     private String getCurrentTime() {

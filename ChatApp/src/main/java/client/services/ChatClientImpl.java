@@ -5,7 +5,6 @@ import server.observer.ChatClient;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.Arrays;
 
 public class ChatClientImpl extends UnicastRemoteObject implements ChatClient {
     private ChatWindow chatWindow;

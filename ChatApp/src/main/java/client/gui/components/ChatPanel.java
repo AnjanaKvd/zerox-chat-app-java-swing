@@ -1,6 +1,7 @@
 package client.gui.components;
 
 import model.User;
+import dao.UserDAO;
 
 import javax.swing.*;
 import java.awt.*;
@@ -14,9 +15,11 @@ public class ChatPanel extends JPanel {
     private final SimpleDateFormat TIMESTAMP_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private final SimpleDateFormat DATE_HEADER_FORMAT = new SimpleDateFormat("MMMM d, yyyy");
     private Date lastDateHeader = null;
+    private final UserDAO userDAO;
     
     public ChatPanel(User currentUser) {
         this.currentUser = currentUser;
+        this.userDAO = new UserDAO();
         
         setLayout(new BorderLayout());
         
@@ -95,6 +98,20 @@ public class ChatPanel extends JPanel {
     }
     
     private void addUserMessage(User sender, String content, boolean isCurrentUser, Date timestamp) {
+        // If we only have the username but not the full user object
+        if (sender != null && sender.getId() == 0 && !isCurrentUser) {
+            // Try to fetch the user from the database
+            String nickname = sender.getNickname();
+            try {
+                User fullUser = userDAO.findByUsernameOrNickname(nickname);
+                if (fullUser != null) {
+                    sender = fullUser;
+                }
+            } catch (Exception e) {
+                System.err.println("Error fetching user data: " + e.getMessage());
+            }
+        }
+        
         MessageBubble messageBubble = new MessageBubble(sender, content, isCurrentUser, false, timestamp);
         messagesPanel.add(messageBubble);
         messagesPanel.add(Box.createVerticalStrut(2));

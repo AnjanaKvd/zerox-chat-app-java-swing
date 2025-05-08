@@ -533,6 +533,20 @@ public class UserDashboard extends JFrame {
         if (message.isEmpty()) return;
         
         try {
+            // Check for "Bye" command
+            if (message.equalsIgnoreCase("Bye")) {
+                // Send the message first
+                ChatServer chatServer = ConnectionManager.getInstance().getChatServer();
+                if (chatServer != null) {
+                    chatServer.sendMessage(message, currentUser.getNickname());
+                }
+                
+                // Then exit the chat
+                goBackToChats();
+                return;
+            }
+            
+            // For regular messages
             ChatServer chatServer = ConnectionManager.getInstance().getChatServer();
             if (chatServer != null) {
                 // Add timestamp to the message
@@ -788,26 +802,23 @@ public class UserDashboard extends JFrame {
         JLabel avatarLabel = new JLabel();
         avatarLabel.setPreferredSize(new Dimension(30, 30));
         
-        // Find the User object based on username (simplistic approach)
+        // Find the User object based on username
         User user = null;
-        try {
-            // You might want to use a UserDAO method to find by username
-            // This is a simplistic approach assuming currentUser might match
-            if (currentUser.getUsername().equals(username) || 
-                currentUser.getNickname().equals(username)) {
-                user = currentUser;
+        
+        // First check if it's the current user
+        if (currentUser.getUsername().equals(username) || 
+            currentUser.getNickname().equals(username)) {
+            user = currentUser;
+        } else {
+            // Lookup the user in the database
+            try {
+                user = userDAO.findByUsernameOrNickname(username);
+            } catch (Exception e) {
+                System.err.println("Error fetching user profile: " + e.getMessage());
             }
-        } catch (Exception e) {
-            // Ignore, will use default icon
         }
         
-        if (user == null) {
-            // Create user with just the username/nickname for avatar generation
-            user = new User();
-            user.setNickname(username);
-        }
-        
-        // Set avatar (reuse logic from existing methods)
+        // Set avatar
         setUserAvatar(avatarLabel, user, 30);
         
         // Username label

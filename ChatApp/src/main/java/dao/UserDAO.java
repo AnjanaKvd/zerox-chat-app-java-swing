@@ -136,4 +136,30 @@ public class UserDAO {
         
         return null;
     }
+    
+    public User findByUsernameOrNickname(String usernameOrNickname) {
+        Transaction transaction = null;
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            transaction = session.beginTransaction();
+            
+            // Try to find by username
+            String hql = "FROM User WHERE username = :param OR nickname = :param";
+            Query<User> query = session.createQuery(hql, User.class);
+            query.setParameter("param", usernameOrNickname);
+            
+            List<User> users = query.getResultList();
+            transaction.commit();
+            
+            if (users != null && !users.isEmpty()) {
+                return users.get(0);
+            }
+            return null;
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            e.printStackTrace();
+            return null;
+        }
+    }
 }

@@ -12,6 +12,8 @@ import javax.persistence.criteria.Root;
 import javax.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.List;
+import java.io.File;
+import java.nio.file.Files;
 
 public class ChatDAO {
     
@@ -99,22 +101,62 @@ public class ChatDAO {
         }
     }
     
+    /**
+     * Deletes a chat completely, including its log file
+     */
     public void deleteChat(int chatId) {
         Transaction transaction = null;
+        String logFilePath = null;
+        
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
             
             Chat chat = session.get(Chat.class, chatId);
             if (chat != null) {
+                // Get log file path before deleting
+                logFilePath = chat.getLogFile();
+                
+                // Clear the subscriptions first
+                String clearSubscriptionsHql = "DELETE FROM user_chat_subscriptions WHERE chat_id = :chatId";
+                session.createNativeQuery(clearSubscriptionsHql)
+                        .setParameter("chatId", chatId)
+                        .executeUpdate();
+                
+                // Now delete the chat
                 session.delete(chat);
+                
+                // Commit transaction
+                transaction.commit();
             }
-            
-            transaction.commit();
         } catch (Exception e) {
             if (transaction != null) {
                 transaction.rollback();
             }
+            System.err.println("Database error deleting chat: " + e.getMessage());
+            e.printStackTrace();
             throw e;
+        }
+        
+        // Delete the log file outside the transaction
+        if (logFilePath != null && !logFilePath.isEmpty()) {
+            try {
+                File logFile = new File(logFilePath);
+                if (logFile.exists()) {
+                    if (logFile.delete()) {
+                        System.out.println("Chat log file deleted: " + logFilePath);
+                    } else {
+                        System.err.println("Failed to delete chat log file: " + logFilePath);
+                        // Try alternative method
+                        Files.deleteIfExists(logFile.toPath());
+                    }
+                } else {
+                    System.err.println("Log file not found: " + logFilePath);
+                }
+            } catch (Exception e) {
+                System.err.println("Error deleting log file: " + e.getMessage());
+                e.printStackTrace();
+                // Don't rethrow - we completed the DB transaction successfully
+            }
         }
     }
 
@@ -167,6 +209,35 @@ public class ChatDAO {
                 transaction.rollback();
             }
             throw e;
+        }
+    }
+
+    /**
+     * Gets just the IDs of chats a user is subscribed to
+     */
+    public List<Integer> getSubscribedChatIds(int userId) {
+        List<Integer> chatIds = new ArrayList<>();
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            // Get the user with their subscribed chats
+            User user = session.get(User.class, userId);
+            if (user != null) {
+                // Manual approach to avoid lazy loading issues
+                String sql = "SELECT chat_id FROM user_chat_subscriptions WHERE user_id = :userId";
+                Query<Object> query = session.createNativeQuery(sql);
+                query.setParameter("userId", userId);
+                
+                // Convert results to integers manually
+                List<Object> results = query.getResultList();
+                for (Object obj : results) {
+                    if (obj instanceof Number) {
+                        chatIds.add(((Number) obj).intValue());
+                    }
+                }
+            }
+            return chatIds;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return chatIds; // Return empty list on error
         }
     }
 }

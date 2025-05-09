@@ -37,15 +37,15 @@ public class ChatPanel extends JPanel {
     }
     
     public void addMessage(String message) {
-        // Parse the message to determine type and extract data
+        // Check if it's a system message
         if (message.contains(" joined the chat at: ") || 
             message.contains(" left the chat at: ") ||
             message.contains("Chat started at: ") ||
             message.contains("Chat ended at: ")) {
-            // System message
+            // System message - display differently
             addSystemMessage(message);
         } else {
-            // Regular message - extract sender and content
+            // Try to parse as a user message (format: "username: message")
             int colonPos = message.indexOf(": ");
             if (colonPos > 0) {
                 String sender = message.substring(0, colonPos);
@@ -71,7 +71,15 @@ public class ChatPanel extends JPanel {
                 // Create user object (simplified, you might want to look up the actual user)
                 User senderUser = new User();
                 senderUser.setNickname(sender);
-                // Here you could look up the actual User object from a cache/database
+                // Try to find full user object if possible
+                try {
+                    User fullUser = userDAO.findByUsernameOrNickname(sender);
+                    if (fullUser != null) {
+                        senderUser = fullUser;
+                    }
+                } catch (Exception e) {
+                    // Use the basic user if lookup fails
+                }
                 
                 // Add the message
                 addUserMessage(senderUser, content, sender.equals(currentUser.getNickname()), timestamp);
@@ -90,7 +98,25 @@ public class ChatPanel extends JPanel {
     }
     
     private void addSystemMessage(String message) {
-        MessageBubble systemBubble = new MessageBubble(null, message, false, true, new Date());
+        // Format the system message to be cleaner
+        String formattedMessage = message;
+        
+        // Check for join/leave messages
+        if (message.contains(" joined the chat at: ")) {
+            int idx = message.indexOf(" joined the chat at: ");
+            String username = message.substring(0, idx);
+            formattedMessage = username + " joined the chat";
+        } else if (message.contains(" left the chat at: ")) {
+            int idx = message.indexOf(" left the chat at: ");
+            String username = message.substring(0, idx);
+            formattedMessage = username + " left the chat";
+        } else if (message.contains("Chat started at: ")) {
+            formattedMessage = "Chat started";
+        } else if (message.contains("Chat ended at: ")) {
+            formattedMessage = "Chat ended";
+        }
+        
+        MessageBubble systemBubble = new MessageBubble(null, formattedMessage, false, true, new Date());
         messagesPanel.add(systemBubble);
         messagesPanel.add(Box.createVerticalStrut(5));
         messagesPanel.revalidate();

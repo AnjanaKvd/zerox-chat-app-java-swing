@@ -38,6 +38,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.util.HashSet;
+import java.util.Set;
 
 public class UserDashboard extends JFrame {
     private final User currentUser;
@@ -144,10 +146,10 @@ public class UserDashboard extends JFrame {
 
         // Left side: Profile Pic
         profileImageLabel = new JLabel();
-        profileImageLabel.setPreferredSize(new Dimension(45, 45)); // Slightly larger for better visibility
+        profileImageLabel.setPreferredSize(new Dimension(45, 45));
         profileImageLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
         profileImageLabel.setToolTipText("View Profile");
-        loadAndSetProfileImage(); // Call this to draw the initial icon
+        loadAndSetProfileImage();
 
         profileImageLabel.addMouseListener(new MouseAdapter() {
             @Override
@@ -156,8 +158,8 @@ public class UserDashboard extends JFrame {
                 JDialog dialog = new JDialog(UserDashboard.this, "User Profile", true);
                 dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
                 dialog.setContentPane(profilePanel);
-                dialog.pack(); // Pack after adding content
-                dialog.setMinimumSize(new Dimension(400, 500)); // Ensure a reasonable minimum size
+                dialog.pack();
+                dialog.setMinimumSize(new Dimension(400, 500));
                 dialog.setLocationRelativeTo(UserDashboard.this);
                 dialog.setVisible(true);
             }
@@ -167,11 +169,24 @@ public class UserDashboard extends JFrame {
         topLeftPanel.setOpaque(false);
         topLeftPanel.add(profileImageLabel);
 
+        // Middle: Refresh button
+        JButton refreshButton = new JButton("Refresh");
+        refreshButton.setFont(GENERAL_FONT);
+        refreshButton.setBackground(new Color(46, 125, 50)); // Green
+        refreshButton.setForeground(Color.WHITE);
+        refreshButton.setFocusPainted(false);
+        refreshButton.setToolTipText("Refresh all data");
+        refreshButton.addActionListener(e -> refreshAllData());
+        
+        JPanel topMiddlePanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        topMiddlePanel.setOpaque(false);
+        topMiddlePanel.add(refreshButton);
+
         // Right side: Theme Switcher and Logout Button
         themeSwitcherCheckBox = new JCheckBox(isDarkMode ? "Light" : "Dark");
         themeSwitcherCheckBox.setFont(GENERAL_FONT);
         themeSwitcherCheckBox.setSelected(isDarkMode);
-        themeSwitcherCheckBox.putClientProperty("FlatLaf.styleClass", "switch"); // Style as a switch
+        themeSwitcherCheckBox.putClientProperty("FlatLaf.styleClass", "switch");
         themeSwitcherCheckBox.setOpaque(false);
         themeSwitcherCheckBox.setToolTipText("Toggle Dark/Light Mode");
         themeSwitcherCheckBox.addActionListener(e -> switchTheme());
@@ -190,6 +205,7 @@ public class UserDashboard extends JFrame {
         topRightPanel.add(logoutButton);
 
         topBar.add(topLeftPanel, BorderLayout.WEST);
+        topBar.add(topMiddlePanel, BorderLayout.CENTER);
         topBar.add(topRightPanel, BorderLayout.EAST);
         return topBar;
     }
@@ -299,6 +315,7 @@ public class UserDashboard extends JFrame {
         if (homeTabPanel == null) homeTabPanel = createHomeTabPanel();
         homeTabPanel.removeAll();
 
+        // Get subscribed chats directly from DAO to avoid lazy loading issues
         List<Chat> subscribedChats = chatDAO.getSubscribedChats(currentUser.getId());
         if (subscribedChats == null) subscribedChats = new ArrayList<>();
 
@@ -347,10 +364,10 @@ public class UserDashboard extends JFrame {
             // Create the chat interface
             setupChatInterface();
             
-            // Load chat history from log file
+            // Load chat history
             loadChatHistory();
             
-            // Register with chat server
+            // Register with chat server and join the specific chat
             ChatServer chatServer = ConnectionManager.getInstance().getChatServer();
             if (chatServer != null) {
                 try {
@@ -359,51 +376,20 @@ public class UserDashboard extends JFrame {
                         @Override
                         public void appendToChatArea(String message) {
                             UserDashboard.this.appendToChatArea(message);
-                            // Also log the message to file
-                            appendToLogFile(message);
                         }
                         
                         @Override
                         public void updateUserList(String[] users) {
-                            // Can implement this later if needed
+                            UserDashboard.this.updateUserList(users);
                         }
                     };
                     
                     // Create new client for this chat
-                    this.chatClient = new ChatClientImpl() {
-                        @Override
-                        public void receiveMessage(String message) throws RemoteException {
-                            appendToChatArea(message);
-                            super.receiveMessage(message);
-                        }
-                        
-                        @Override
-                        public void updateUserList(String[] users) throws RemoteException {
-                            UserDashboard.this.updateUserList(users);
-                            super.updateUserList(users);
-                        }
-                        
-                        @Override
-                        public void notifyChatStarted(String time) throws RemoteException {
-                            appendToChatArea("Chat started at: " + time);
-                            super.notifyChatStarted(time);
-                        }
-                        
-                        @Override
-                        public void notifyChatEnded(String time) throws RemoteException {
-                            appendToChatArea("Chat ended at: " + time);
-                            super.notifyChatEnded(time);
-                        }
-                    };
-                    
+                    this.chatClient = new ChatClientImpl();
                     this.chatClient.setChatWindow(chatWindowCallback);
                     
-                    chatServer.registerClient(this.chatClient, currentUser.getNickname());
-                    
-                    // Log user joined event
-                    String joinMessage = currentUser.getNickname() + " joined the chat at: " + getCurrentTime();
-                    appendToChatArea(joinMessage);
-                    appendToLogFile(joinMessage);
+                    // Join the existing chat with its ID
+                    chatServer.registerClientToChat(chatClient, currentUser.getNickname(), chat.getId());
                 } catch (RemoteException e) {
                     throw new Exception("Failed to register with chat server: " + e.getMessage());
                 }
@@ -434,9 +420,12 @@ public class UserDashboard extends JFrame {
         backButton.addActionListener(e -> goBackToChats());
         
         JLabel chatTitleLabel = new JLabel();
-        User admin = currentChat.getAdmin();
-        String chatName = (admin != null) ? admin.getUsername() + "'s Chat" : "Chat #" + currentChat.getId();
-        chatTitleLabel.setText(chatName);
+        if (currentChat.getName() != null && !currentChat.getName().isEmpty()) {
+            chatTitleLabel.setText(currentChat.getName());
+        } else {
+            User admin = currentChat.getAdmin();
+            chatTitleLabel.setText((admin != null) ? admin.getUsername() + "'s Chat" : "Chat #" + currentChat.getId());
+        }
         chatTitleLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
         chatTitleLabel.setHorizontalAlignment(SwingConstants.CENTER);
         
@@ -499,19 +488,13 @@ public class UserDashboard extends JFrame {
     }
 
     private void goBackToChats() {
-        // Log user left event
-        if (isChatActive && currentChat != null) {
+        // Log user left event and unregister from chat server
+        if (isChatActive && currentChat != null && chatClient != null) {
             try {
-                String leaveMessage = currentUser.getNickname() + " left the chat at: " + getCurrentTime();
-                appendToChatArea(leaveMessage);
-                appendToLogFile(leaveMessage);
-                
-                // Unregister from chat server
-                if (chatClient != null) {
-                    ChatServer chatServer = ConnectionManager.getInstance().getChatServer();
-                    if (chatServer != null) {
-                        chatServer.removeClient(chatClient, currentUser.getNickname());
-                    }
+                ChatServer chatServer = ConnectionManager.getInstance().getChatServer();
+                if (chatServer != null) {
+                    chatServer.removeClient(chatClient, currentUser.getNickname());
+                    // The server will handle the leave message and logging
                 }
             } catch (Exception e) {
                 System.err.println("Error leaving chat: " + e.getMessage());
@@ -549,11 +532,7 @@ public class UserDashboard extends JFrame {
             // For regular messages
             ChatServer chatServer = ConnectionManager.getInstance().getChatServer();
             if (chatServer != null) {
-                // Add timestamp to the message
-                String timestampedMessage = message + " [" + 
-                       new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) + "]";
-                
-                chatServer.sendMessage(timestampedMessage, currentUser.getNickname());
+                chatServer.sendMessage(message, currentUser.getNickname());
                 messageField.setText("");
             }
         } catch (RemoteException e) {
@@ -577,8 +556,9 @@ public class UserDashboard extends JFrame {
         if (allChatsTabPanel == null) allChatsTabPanel = createAllChatsTabPanel();
         allChatsTabPanel.removeAll();
 
+        // Get all active chats
         List<Chat> allChats = chatDAO.getActiveChats();
-         if (allChats == null) allChats = new ArrayList<>();
+        if (allChats == null) allChats = new ArrayList<>();
 
         if (allChats.isEmpty()) {
             JLabel noChatsLabel = new JLabel("No chats available at the moment.");
@@ -590,16 +570,19 @@ public class UserDashboard extends JFrame {
             chatListPanel.setLayout(new BoxLayout(chatListPanel, BoxLayout.Y_AXIS));
             chatListPanel.setBackground(Color.WHITE);
             
-            // Get user's subscribed chat IDs
-            List<Integer> subscribedChatIds = new ArrayList<>();
-            List<Chat> userSubscribedChats = chatDAO.getSubscribedChats(currentUser.getId());
-            if (userSubscribedChats != null) {
-                for (Chat c : userSubscribedChats) subscribedChatIds.add(c.getId());
+            // Get user's subscribed chats
+            List<Chat> subscribedChats = chatDAO.getSubscribedChats(currentUser.getId());
+            Set<Integer> subscribedChatIds = new HashSet<>();
+            
+            for (Chat chat : subscribedChats) {
+                subscribedChatIds.add(chat.getId());
             }
 
             for (Chat chat : allChats) {
+                // Check if user is subscribed to this chat
                 boolean isSubscribed = subscribedChatIds.contains(chat.getId());
                 
+                // Create chat panel
                 JPanel chatEntry = new JPanel(new BorderLayout());
                 chatEntry.setBackground(Color.WHITE);
                 chatEntry.setBorder(BorderFactory.createCompoundBorder(
@@ -607,87 +590,119 @@ public class UserDashboard extends JFrame {
                     BorderFactory.createEmptyBorder(10, 15, 10, 15)
                 ));
                 
-                // Chat info
-                JPanel chatInfoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-                chatInfoPanel.setOpaque(false);
+                // Left side - chat info
+                JPanel infoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+                infoPanel.setOpaque(false);
                 
-                // Admin's profile pic
+                // Avatar
                 JLabel avatarLabel = new JLabel();
-                avatarLabel.setPreferredSize(new Dimension(32, 32));
+                avatarLabel.setPreferredSize(new Dimension(40, 40));
                 User admin = chat.getAdmin();
-                // Set avatar (reusing logic from ChatCard - could be extracted to a utility)
-                if (admin != null && admin.getProfilePic() != null) {
-                    try {
-                        ImageIcon icon = new ImageIcon(admin.getProfilePic());
-                        avatarLabel.setIcon(icon);
-                    } catch (Exception e) {
-                        // Default avatar will be set below
-                    }
-                }
+                setUserAvatar(avatarLabel, admin, 40);
                 
-                // If no avatar was set, use default
-                if (avatarLabel.getIcon() == null) {
-                    // Simple colored circle with initial
-                    BufferedImage img = new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
-                    Graphics2D g2d = img.createGraphics();
-                    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                    
-                    g2d.setColor(new Color(52, 152, 219));
-                    g2d.fillOval(0, 0, 32, 32);
-                    
-                    g2d.setColor(Color.WHITE);
-                    String initial = admin != null && admin.getNickname() != null ? 
-                                    admin.getNickname().substring(0, 1).toUpperCase() : "C";
-                    Font font = new Font("Segoe UI", Font.BOLD, 16);
-                    g2d.setFont(font);
-                    FontMetrics fm = g2d.getFontMetrics();
-                    int x = (32 - fm.stringWidth(initial)) / 2;
-                    int y = ((32 - fm.getHeight()) / 2) + fm.getAscent();
-                    g2d.drawString(initial, x, y);
-                    g2d.dispose();
-                    
-                    avatarLabel.setIcon(new ImageIcon(img));
-                }
-                
-                JLabel chatNameLabel = new JLabel();
-                if (admin != null) {
-                    chatNameLabel.setText(admin.getUsername() + "'s Chat");
+                // Chat name
+                String chatName;
+                if (chat.getName() != null && !chat.getName().isEmpty()) {
+                    chatName = chat.getName();
+                } else if (admin != null) {
+                    chatName = admin.getUsername() + "'s Chat";
                 } else {
-                    chatNameLabel.setText("Chat #" + chat.getId());
-                }
-                chatNameLabel.setFont(GENERAL_FONT);
-                
-                chatInfoPanel.add(avatarLabel);
-                chatInfoPanel.add(Box.createHorizontalStrut(10));
-                chatInfoPanel.add(chatNameLabel);
-                
-                // Subscribe button
-                JButton subscribeButton = new JButton(isSubscribed ? "Unsubscribe" : "Subscribe");
-                subscribeButton.setFont(GENERAL_FONT);
-                
-                if (isSubscribed) {
-                    subscribeButton.setBackground(new Color(211, 47, 47)); // Red color for unsubscribe
-                    subscribeButton.setForeground(Color.WHITE);
-                } else {
-                    subscribeButton.setBackground(PRIMARY_COLOR); // Blue color for subscribe  
-                    subscribeButton.setForeground(Color.WHITE);
+                    chatName = "Chat #" + chat.getId();
                 }
                 
-                subscribeButton.setFocusPainted(false);
-                subscribeButton.addActionListener(e -> handleSubscribeToggle(chat, subscribeButton, isSubscribed));
+                JLabel nameLabel = new JLabel(chatName);
+                nameLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
                 
+                infoPanel.add(avatarLabel);
+                infoPanel.add(Box.createHorizontalStrut(10));
+                infoPanel.add(nameLabel);
+                
+                // Right side - subscribe button
                 JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
                 buttonPanel.setOpaque(false);
+                
+                JButton subscribeButton = new JButton();
+                if (isSubscribed) {
+                    // User is already subscribed - show unsubscribe button (red)
+                    subscribeButton.setText("Unsubscribe");
+                    subscribeButton.setBackground(new Color(211, 47, 47)); // Red
+                } else {
+                    // User is not subscribed - show subscribe button (green)
+                    subscribeButton.setText("Subscribe");
+                    subscribeButton.setBackground(new Color(46, 125, 50)); // Green
+                }
+                
+                // Common button styling
+                subscribeButton.setForeground(Color.WHITE);
+                subscribeButton.setFocusPainted(false);
+                subscribeButton.setBorderPainted(false);
+                subscribeButton.setFont(new Font("Segoe UI", Font.BOLD, 12));
+                
+                // Set up button action
+                final int chatId = chat.getId();
+                final String displayName = chatName;
+                final boolean currentlySubscribed = isSubscribed;
+                
+                subscribeButton.addActionListener(e -> {
+                    try {
+                        // Show wait cursor
+                        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                        
+                        if (currentlySubscribed) {
+                            // Currently subscribed - unsubscribe
+                            chatDAO.unsubscribeUserFromChat(currentUser.getId(), chatId);
+                            JOptionPane.showMessageDialog(this, 
+                                    "Successfully unsubscribed from " + displayName, 
+                                    "Unsubscribed", 
+                                    JOptionPane.INFORMATION_MESSAGE);
+                        } else {
+                            // Not subscribed - subscribe
+                            chatDAO.subscribeUserToChat(currentUser.getId(), chatId);
+                            JOptionPane.showMessageDialog(this, 
+                                    "Successfully subscribed to " + displayName, 
+                                    "Subscribed", 
+                                    JOptionPane.INFORMATION_MESSAGE);
+                        }
+                        
+                        // Refresh both tabs
+                        loadSubscribedChats();
+                        loadAllChats();
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(this, 
+                                "Error " + (currentlySubscribed ? "unsubscribing from" : "subscribing to") + 
+                                " chat: " + ex.getMessage(), 
+                                "Error", 
+                                JOptionPane.ERROR_MESSAGE);
+                        ex.printStackTrace();
+                    } finally {
+                        setCursor(Cursor.getDefaultCursor());
+                    }
+                });
+                
                 buttonPanel.add(subscribeButton);
                 
-                chatEntry.add(chatInfoPanel, BorderLayout.WEST);
+                // Add to chat entry
+                chatEntry.add(infoPanel, BorderLayout.WEST);
                 chatEntry.add(buttonPanel, BorderLayout.EAST);
                 
+                // Add to list
                 chatListPanel.add(chatEntry);
             }
             
             // Add some padding at the bottom
             chatListPanel.add(Box.createVerticalStrut(20));
+            
+//            // Add refresh button at the top
+//            JPanel headerPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+//            headerPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+//
+//            JButton refreshButton = new JButton("Refresh");
+//            refreshButton.addActionListener(e -> loadAllChats());
+//            headerPanel.add(refreshButton);
+            
+            // Put everything together
+            allChatsTabPanel.setLayout(new BorderLayout());
+//            allChatsTabPanel.add(headerPanel, BorderLayout.NORTH);
             
             JScrollPane scrollPane = new JScrollPane(chatListPanel);
             scrollPane.setBorder(null);
@@ -697,30 +712,6 @@ public class UserDashboard extends JFrame {
         
         allChatsTabPanel.revalidate();
         allChatsTabPanel.repaint();
-    }
-
-    private void handleSubscribeToggle(Chat chat, JButton button, boolean isCurrentlySubscribed) {
-        try {
-            if (isCurrentlySubscribed) {
-                // Unsubscribe
-                chatDAO.unsubscribeUserFromChat(currentUser.getId(), chat.getId());
-                button.setText("Subscribe");
-                button.setBackground(PRIMARY_COLOR);
-            } else {
-                // Subscribe
-            chatDAO.subscribeUserToChat(currentUser.getId(), chat.getId());
-                button.setText("Unsubscribe");
-                button.setBackground(new Color(211, 47, 47));
-            }
-            
-            // Refresh subscribed chats list
-            loadSubscribedChats();
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, 
-                    "Error " + (isCurrentlySubscribed ? "unsubscribing from" : "subscribing to") + 
-                    " chat: " + ex.getMessage(), 
-                    "Error", JOptionPane.ERROR_MESSAGE);
-        }
     }
 
     private void loadChatHistory() {
@@ -738,31 +729,6 @@ public class UserDashboard extends JFrame {
             } catch (Exception e) {
                 System.err.println("Error loading chat history: " + e.getMessage());
             }
-        }
-    }
-
-    private void appendToLogFile(String message) {
-        String logFile = currentChat.getLogFile();
-        if (logFile == null || logFile.isEmpty()) {
-            // Create new log file if none exists
-            String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-            logFile = "chat_" + currentChat.getId() + "_" + timestamp + ".txt";
-            
-            // Update chat record
-            try {
-                currentChat.setLogFile(logFile);
-                chatDAO.saveChat(currentChat);
-            } catch (Exception e) {
-                System.err.println("Error updating chat log file: " + e.getMessage());
-            }
-        }
-        
-        // Append to log file
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(logFile, true))) {
-            writer.write(message);
-            writer.newLine();
-        } catch (Exception e) {
-            System.err.println("Error writing to chat log: " + e.getMessage());
         }
     }
 
@@ -907,4 +873,36 @@ public class UserDashboard extends JFrame {
     // The old ChatWindow related logic like `joinSelectedChat` from previous UserDashboard
     // will need to be re-integrated when a user clicks on a chat from "My Chats" tab.
     // The ChatListCellRenderer and createChatIcon might be useful for "My Chats" tab later.
+
+    // Add a method to refresh all data
+    private void refreshAllData() {
+        try {
+            // For lazy-loaded collections, we need to access them within the transaction
+            // Get a fresh list of chat IDs the user is subscribed to
+            List<Integer> subscribedChatIds = chatDAO.getSubscribedChatIds(currentUser.getId());
+            
+            // For visual updates, we don't need the full Chat objects
+            // We'll reload them as needed in the specific panels
+            
+            // Refresh the subscribed chats panel
+            loadSubscribedChats();
+            
+            // Refresh all chats panel
+            loadAllChats();
+            
+            // Refresh profile image in case it was updated
+            loadAndSetProfileImage();
+            
+            JOptionPane.showMessageDialog(this, 
+                    "All data refreshed successfully!", 
+                    "Refresh Complete", 
+                    JOptionPane.INFORMATION_MESSAGE);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, 
+                    "Error refreshing data: " + ex.getMessage(), 
+                    "Refresh Error", 
+                    JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
+        }
+    }
 } 

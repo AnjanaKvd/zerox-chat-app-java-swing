@@ -27,6 +27,8 @@ public class Chat {
     @ManyToMany(mappedBy = "subscribedChats", fetch = FetchType.LAZY)
     private Set<User> subscribedUsers = new HashSet<>();
     
+    private String name;
+    
     // Getters and setters
     public int getId() {
         return id;
@@ -74,5 +76,13 @@ public class Chat {
 
     public void setSubscribedUsers(Set<User> subscribedUsers) {
         this.subscribedUsers = subscribedUsers;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 }

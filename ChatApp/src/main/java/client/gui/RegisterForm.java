@@ -296,7 +296,7 @@ public class RegisterForm extends JFrame {
             
             try {
                 // Create resources directory if it doesn't exist
-                File resourcesDir = new File("src/main/resources/profile_pics");
+                File resourcesDir = new File("profile_pics");
                 if (!resourcesDir.exists()) {
                     resourcesDir.mkdirs();
                 }

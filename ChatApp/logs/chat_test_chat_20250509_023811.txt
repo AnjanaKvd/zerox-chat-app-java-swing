@@ -1,0 +1,16 @@
+Chat 'test chat' created at 2025-05-09 02:38:11
+Created by admin: admin
+-------------------------------------------
+avishka has joined : 2025-05-09 03:16:36
+anj has joined : 2025-05-09 03:16:38
+avishka left : 2025-05-09 03:16:48
+avishka has joined : 2025-05-09 03:16:57
+ishan has joined : 2025-05-09 03:17:49
+anj: hiiii
+avishka: hii
+ishan: hii
+anj left : 2025-05-09 03:18:41
+avishka left : 2025-05-09 03:18:43
+ishan left : 2025-05-09 03:18:47
+anj has joined : 2025-05-09 05:20:52
+anj left : 2025-05-09 05:21:23

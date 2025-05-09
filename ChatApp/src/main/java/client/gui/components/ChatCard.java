@@ -72,9 +72,11 @@ public class ChatCard extends JPanel {
         contentPanel.setOpaque(false);
         GridBagConstraints gbc = new GridBagConstraints();
         
-        // Chat name - use a consistent format
+        // Chat name - use name field if available
         String chatName;
-        if (admin != null) {
+        if (chat.getName() != null && !chat.getName().isEmpty()) {
+            chatName = chat.getName();
+        } else if (admin != null) {
             chatName = admin.getUsername() + "'s Chat";
         } else {
             chatName = "Chat #" + chat.getId();

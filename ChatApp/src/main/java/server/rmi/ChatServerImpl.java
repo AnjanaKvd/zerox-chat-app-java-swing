@@ -48,7 +48,7 @@ public class ChatServerImpl extends UnicastRemoteObject implements ChatServer {
         this.userDAO = userDAO;
         this.subscriptionManager = subscriptionManager;
         connectedClients = new ConcurrentHashMap<>();
-        sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        sdf = new SimpleDateFormat("yyyy-MM-dd : hh:mm a");
         chatLog = new ArrayList<>();
         chatActive = false;
     }
@@ -268,9 +268,10 @@ public class ChatServerImpl extends UnicastRemoteObject implements ChatServer {
     }
 
     private String getCurrentTime() {
-        return sdf.format(new Date());
+        SimpleDateFormat sdf = new SimpleDateFormat("hh:mm a");
+        Date now = new Date();
+        return ":"+ sdf.format(now).toLowerCase() ;
     }
-
     
     private void broadcastMessageToChat(String message, int chatId) {
         List<ChatClient> clients = chatRooms.get(chatId);

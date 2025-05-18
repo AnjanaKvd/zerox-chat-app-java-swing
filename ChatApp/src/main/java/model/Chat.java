@@ -2,6 +2,8 @@ package model;
 
 import javax.persistence.*;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "chats")
@@ -21,8 +23,13 @@ public class Chat {
     @ManyToOne
     @JoinColumn(name = "admin_id")
     private User admin;
+
+    @ManyToMany(mappedBy = "subscribedChats", fetch = FetchType.LAZY)
+    private Set<User> subscribedUsers = new HashSet<>();
     
-    // Getters and setters
+    private String name;
+    
+    
     public int getId() {
         return id;
     }
@@ -61,5 +68,21 @@ public class Chat {
     
     public void setAdmin(User admin) {
         this.admin = admin;
+    }
+
+    public Set<User> getSubscribedUsers() {
+        return subscribedUsers;
+    }
+
+    public void setSubscribedUsers(Set<User> subscribedUsers) {
+        this.subscribedUsers = subscribedUsers;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 }

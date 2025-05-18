@@ -1,6 +1,7 @@
 package client.gui;
 
 import client.services.ChatClientImpl;
+import model.Chat;
 import model.User;
 import server.rmi.ChatServer;
 
@@ -17,6 +18,9 @@ import java.awt.image.BufferedImage;
 import java.rmi.RemoteException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 public class ChatWindow extends JFrame {
 
@@ -34,28 +38,26 @@ public class ChatWindow extends JFrame {
     private final ChatClientImpl chatClient;
     private final ChatServer chatServer;
     private final ImageIcon userIcon;
-
-
-
-
-    public ChatWindow(User user, ChatServer server, ChatClientImpl client) {
+    private Chat currentChat;
+    
+    public ChatWindow(User user, ChatServer server, ChatClientImpl client, Chat chat) {
         this.currentUser = user;
         this.chatServer = server;
         this.chatClient = client;
+        this.currentChat = chat;
         this.userIcon = new ImageIcon(createUserIcon(16));
-
-        // Set the chat window in the client
+        
+        
         if (client != null) {
             client.setChatWindow(this);
         }
-
-        // Setup window
-        setTitle("Chat - " + user.getNickname());
+        
+        
+        setTitle("Chat - " + (chat.getAdmin() != null ? chat.getAdmin().getNickname() : "Chat #" + chat.getId()));
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        // Add window closing handler to leave chat on close
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
@@ -66,7 +68,6 @@ public class ChatWindow extends JFrame {
         initComponents();
         layoutComponents();
 
-        // Register with the server
         try {
             if (chatServer != null) {
                 chatServer.registerClient(chatClient, currentUser.getNickname());
@@ -83,7 +84,18 @@ public class ChatWindow extends JFrame {
 
         setVisible(true);
     }
-
+    
+    public ChatWindow() {
+        
+        this.currentUser = null;
+        this.chatServer = null;
+        this.chatClient = null;
+        this.userIcon = null;
+        
+        
+        
+    }
+    
     private void initComponents() {
 
         chatArea = new JTextPane();
@@ -146,11 +158,11 @@ public class ChatWindow extends JFrame {
 
     private void layoutComponents() {
         setLayout(new BorderLayout());
-
-        // Chat area in center
+        
+        
         add(chatScrollPane, BorderLayout.CENTER);
-
-        // Message input area at bottom
+        
+        
         JPanel bottomPanel = new JPanel(new BorderLayout());
         JPanel messagePanel = new JPanel(new BorderLayout());
         messagePanel.add(messageField, BorderLayout.CENTER);
@@ -159,7 +171,6 @@ public class ChatWindow extends JFrame {
         bottomPanel.add(statusLabel, BorderLayout.SOUTH);
         add(bottomPanel, BorderLayout.SOUTH);
 
-        // User list on right
         JScrollPane userScrollPane = new JScrollPane(userListPanel);
         userScrollPane.setPreferredSize(new Dimension(200, getHeight()));
         add(userScrollPane, BorderLayout.EAST);
@@ -171,11 +182,9 @@ public class ChatWindow extends JFrame {
 
         try {
             if (chatServer != null) {
-                String timestampedMessage = message + "   "+getCurrentTime() ;
-//                chatServer.sendMessage(message, currentUser.getNickname());
-                chatServer.sendMessage(timestampedMessage, currentUser.getNickname());
-
-                // If user types "Bye", close the window
+                chatServer.sendMessage(message, currentUser.getNickname());
+                
+                
                 if (message.equalsIgnoreCase("Bye")) {
                     exitChat();
                 }
@@ -203,71 +212,35 @@ public class ChatWindow extends JFrame {
             JOptionPane.showMessageDialog(this,
                     "Error leaving chat: " + ex.getMessage(),
                     "Error", JOptionPane.ERROR_MESSAGE);
-            // Force dispose even if there's an error
+            
             dispose();
         }
     }
 
     public void appendToChatArea(String message) {
-        try {
-            StyledDocument doc = chatArea.getStyledDocument();
-            SimpleAttributeSet attrs = new SimpleAttributeSet();
-
-            StyleConstants.setFontSize(attrs, 14);
-
-            if (message.startsWith("Chat started at") || message.startsWith("Chat ended at")) {
-                StyleConstants.setAlignment(attrs, StyleConstants.ALIGN_CENTER);
-                StyleConstants.setBackground(attrs, new Color(230, 255, 250));
-                StyleConstants.setBold(attrs, true);
-                StyleConstants.setFontSize(attrs, 14);
-                StyleConstants.setFontFamily(attrs, "Arial");
-                StyleConstants.setForeground(attrs, new Color(0, 102, 102));
-            } else if (message.contains("has joined") || message.contains("joined the chat")) {
-                StyleConstants.setForeground(attrs, new Color(230, 255, 250));
-                StyleConstants.setBold(attrs, true);
-                StyleConstants.setAlignment(attrs, StyleConstants.ALIGN_CENTER);
-            } else if (message.contains("left")) {
-                StyleConstants.setAlignment(attrs, StyleConstants.ALIGN_CENTER);
-                StyleConstants.setForeground(attrs, Color.PINK);
-                StyleConstants.setFontSize(attrs, 14);
-            } else {
-                StyleConstants.setAlignment(attrs, StyleConstants.ALIGN_LEFT);
-                StyleConstants.setFontSize(attrs, 14);
-                StyleConstants.setFontFamily(attrs, "Segoe UI");
-                StyleConstants.setForeground(attrs, Color.WHITE);
-            }
-
-
-            doc.setParagraphAttributes(doc.getLength(), 1, attrs, false);
-            doc.insertString(doc.getLength(), message + "\n", attrs);
-
-            chatArea.setCaretPosition(doc.getLength());
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (chatArea != null) {
+            chatArea.append(message + "\n");
+            
+            chatArea.setCaretPosition(chatArea.getDocument().getLength());
         }
     }
 
     public void updateUserList(String[] users) {
-        if (userListPanel == null) return;
-
-        userListPanel.removeAll();
-        if (users != null) {
-            for (String user : users) {
-                JLabel userLabel = new JLabel(user);
-                userLabel.setIcon(userIcon);
-                userLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-                userLabel.setForeground(new Color(209, 209, 218));
-                userLabel.setFont(new Font("Arial", Font.BOLD, 14));
-
-                if (user.equals(currentUser.getNickname())) {
-                    userLabel.setForeground(Color.YELLOW);
-                }
-
+        if (userListPanel != null) {
+            userListPanel.removeAll();
+            
+            // Use HashSet to filter duplicates (just in case)
+            Set<String> uniqueUsers = new HashSet<>(Arrays.asList(users));
+            
+            for (String user : uniqueUsers) {
+                JLabel userLabel = new JLabel(user, userIcon, JLabel.LEFT);
+                userLabel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
                 userListPanel.add(userLabel);
             }
+            
+            userListPanel.revalidate();
+            userListPanel.repaint();
         }
-        userListPanel.revalidate();
-        userListPanel.repaint();
     }
 
     private String getCurrentTime() {
@@ -275,31 +248,29 @@ public class ChatWindow extends JFrame {
         String time = sdf.format(new Date()).toLowerCase();
         return "  "+ time ;
     }
-
-    // Create a simple user icon
+    
+    
     private Image createUserIcon(int size) {
         BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2d = image.createGraphics();
-
-        // Set rendering hints for better quality
+        
+        
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-        // Draw user icon (simple avatar)
-        g2d.setColor(new Color(100, 149, 237)); // Cornflower blue
+        
+        
+        g2d.setColor(new Color(100, 149, 237)); 
         g2d.fillOval(0, 0, size, size);
-
-        // Draw simplified face
+        
         int headSize = (int)(size * 0.6);
         int headY = (int)(size * 0.15);
-        g2d.setColor(new Color(255, 222, 173)); // Navajo white
+        g2d.setColor(new Color(255, 222, 173)); 
         g2d.fillOval((size - headSize) / 2, headY, headSize, headSize);
 
-        // Draw body
         int bodyWidth = (int)(size * 0.6);
         int bodyHeight = (int)(size * 0.4);
         int bodyX = (size - bodyWidth) / 2;
         int bodyY = (int)(size * 0.7);
-        g2d.setColor(new Color(255, 222, 173)); // Navajo white
+        g2d.setColor(new Color(255, 222, 173)); 
         g2d.fillRect(bodyX, bodyY, bodyWidth, bodyHeight);
 
         g2d.dispose();

@@ -20,8 +20,11 @@ public class ConnectionManager {
             System.out.println("Connected to server successfully");
             
             try {
-                chatClient = new ChatClientImpl();
-                System.out.println("Chat client created successfully");
+                // Ensure we only create one client per connection
+                if (chatClient == null) {
+                    chatClient = new ChatClientImpl();
+                    System.out.println("Chat client created successfully");
+                }
             } catch (RemoteException e) {
                 System.err.println("Failed to create chat client: " + e.getMessage());
                 chatClient = null;
@@ -61,6 +64,29 @@ public class ConnectionManager {
             return "Server connected, but client not initialized";
         } else {
             return "Connected";
+        }
+    }
+    
+    // Add method to reset the connection
+    public synchronized void resetConnection() {
+        if (chatClient != null) {
+            try {
+                // Try to properly unregister if possible
+                if (chatServer != null) {
+                    // We can't know the nickname here, so this may not work perfectly
+                    chatServer.removeClient(chatClient, "Unknown");
+                }
+            } catch (Exception e) {
+                System.err.println("Error during client cleanup: " + e.getMessage());
+            }
+            
+            // Create a new client
+            try {
+                chatClient = new ChatClientImpl();
+            } catch (RemoteException e) {
+                System.err.println("Failed to recreate chat client: " + e.getMessage());
+                chatClient = null;
+            }
         }
     }
 } 

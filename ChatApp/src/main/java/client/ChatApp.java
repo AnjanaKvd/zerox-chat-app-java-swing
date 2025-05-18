@@ -10,19 +10,19 @@ import java.awt.*;
 public class ChatApp {
     public static void main(String[] args) {
         try {
-            // Set look and feel to match the system
+            
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             
-            // Show splash screen
+            
             SplashScreen splashScreen = new SplashScreen();
             splashScreen.setVisible(true);
             
-            // Initialize connection to server in background
+            
             SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
                 @Override
                 protected Void doInBackground() throws Exception {
                     try {
-                        // Initialize connection manager (which will connect to the RMI server)
+                        
                         ConnectionManager.getInstance();
                         return null;
                     } catch (Exception e) {
@@ -33,13 +33,13 @@ public class ChatApp {
                 @Override
                 protected void done() {
                     try {
-                        // Close splash screen
+                        
                         splashScreen.dispose();
                         
-                        // Get results (this will throw exception if there was one)
+                        
                         get();
                         
-                        // Start login screen
+                        
                         new LoginForm();
                     } catch (Exception e) {
                         splashScreen.dispose();

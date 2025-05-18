@@ -16,34 +16,34 @@ public class RMIServerMain {
     public static void main(String[] args) {
         try {
             System.out.println("Initializing Hibernate...");
-            HibernateUtil.getSessionFactory(); // Initialize Hibernate
+            HibernateUtil.getSessionFactory(); 
             
             System.out.println("Creating logs directory...");
             createLogsDirectory();
             
-            // Initialize DAOs
+            
             UserDAO userDAO = new UserDAO();
             ChatDAO chatDAO = new ChatDAO();
             
-            // Initialize subscription manager
+            
             ChatSubscriptionManager subscriptionManager = new ChatSubscriptionManager();
             
-            // Create and start RMI Registry
+            
             System.out.println("Starting RMI Registry on port 1099...");
             Registry registry = LocateRegistry.createRegistry(1099);
             
-            // Create and bind chat server
+            
             System.out.println("Initializing Chat Server...");
             ChatServer server = new ChatServerImpl(chatDAO, userDAO, subscriptionManager);
             registry.rebind("ChatService", server);
             
-            // Setup admin account if it doesn't exist
+            
             createAdminIfNotExists(userDAO);
             
             System.out.println("Chat Server is running successfully!");
             System.out.println("Waiting for client connections...");
             
-            // Optional: Create a simple server UI to show status and allow shutdown
+            
             createServerUI();
             
         } catch (Exception e) {
@@ -80,7 +80,7 @@ public class RMIServerMain {
     }
     
     private static void createServerUI() {
-        // Create a simple JFrame with server status and shutdown button
+        
         javax.swing.SwingUtilities.invokeLater(() -> {
             ServerControlPanel controlPanel = new ServerControlPanel();
             controlPanel.setVisible(true);

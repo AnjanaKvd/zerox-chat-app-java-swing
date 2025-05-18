@@ -6,6 +6,7 @@ import dao.UserDAO;
 import model.Chat;
 import model.User;
 import server.rmi.ChatServer;
+import org.hibernate.Session;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -13,10 +14,14 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.File;
 import java.rmi.RemoteException;
 import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.Date;
 
 public class AdminDashboard extends JFrame {
     private final User adminUser;
@@ -43,7 +48,7 @@ public class AdminDashboard extends JFrame {
         this.chatDAO = new ChatDAO();
         this.chatServer = ConnectionManager.getInstance().getChatServer();
 
-        // Setup window
+        
         setTitle("Admin Dashboard - Chat Application");
         setSize(900, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -54,16 +59,16 @@ public class AdminDashboard extends JFrame {
     }
 
     private void initComponents() {
-        // Create main panel with card layout
+        
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
 
-        // Create sidebar
+        
         JPanel sidePanel = new JPanel(new BorderLayout());
         sidePanel.setPreferredSize(new Dimension(200, getHeight()));
         sidePanel.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, Color.GRAY));
 
-        // Admin info panel
+        
         JPanel adminInfoPanel = new JPanel(new GridLayout(2, 1));
         JLabel titleLabel = new JLabel("Admin Dashboard", JLabel.CENTER);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
@@ -72,15 +77,14 @@ public class AdminDashboard extends JFrame {
         adminInfoPanel.add(adminLabel);
         adminInfoPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Navigation buttons
-        JPanel navPanel = new JPanel(new GridLayout(6, 1, 5, 5));
+        
+        JPanel navPanel = new JPanel(new GridLayout(5, 1, 5, 5));
         navPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         JButton homeButton = new JButton("Dashboard Home");
         JButton usersButton = new JButton("Manage Users");
         JButton chatsButton = new JButton("Manage Chats");
         JButton subscriptionsButton = new JButton("Manage Subscriptions");
-        JButton startChatButton = new JButton("Start New Chat");
         JButton logoutButton = new JButton("Logout");
 
         homeButton.addActionListener(e -> cardLayout.show(mainPanel, "home"));
@@ -96,37 +100,35 @@ public class AdminDashboard extends JFrame {
             refreshSubscriptionsPanel();
             cardLayout.show(mainPanel, "subscriptions");
         });
-        startChatButton.addActionListener(e -> startNewChat());
         logoutButton.addActionListener(e -> logout());
 
         navPanel.add(homeButton);
         navPanel.add(usersButton);
         navPanel.add(chatsButton);
         navPanel.add(subscriptionsButton);
-        navPanel.add(startChatButton);
         navPanel.add(logoutButton);
 
         sidePanel.add(adminInfoPanel, BorderLayout.NORTH);
         sidePanel.add(navPanel, BorderLayout.CENTER);
 
-        // Create content panels
+        
         JPanel homePanel = createHomePanel();
         JPanel usersPanel = createUsersPanel();
         JPanel chatsPanel = createChatsPanel();
         JPanel subscriptionsPanel = createSubscriptionsPanel();
 
-        // Add panels to card layout
+        
         mainPanel.add(homePanel, "home");
         mainPanel.add(usersPanel, "users");
         mainPanel.add(chatsPanel, "chats");
         mainPanel.add(subscriptionsPanel, "subscriptions");
 
-        // Add components to frame
+        
         setLayout(new BorderLayout());
         add(sidePanel, BorderLayout.WEST);
         add(mainPanel, BorderLayout.CENTER);
 
-        // Show home panel by default
+        
         cardLayout.show(mainPanel, "home");
     }
 
@@ -137,20 +139,20 @@ public class AdminDashboard extends JFrame {
         welcomeLabel.setFont(new Font("Arial", Font.BOLD, 24));
         welcomeLabel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
 
-        // Stats panel
+        
         JPanel statsPanel = new JPanel(new GridLayout(2, 2, 15, 15));
         statsPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // User count stat
+        
         JPanel userStatPanel = createStatPanel("Total Users", getUserCount());
 
-        // Active chat count stat
+        
         JPanel chatStatPanel = createStatPanel("Active Chats", getActiveChatCount());
 
-        // Log files count
+        
         JPanel logStatPanel = createStatPanel("Saved Logs", getLogFileCount());
 
-        // Quick actions panel
+        
         JPanel actionsPanel = new JPanel();
         actionsPanel.setLayout(new BoxLayout(actionsPanel, BoxLayout.Y_AXIS));
         actionsPanel.setBorder(BorderFactory.createTitledBorder("Quick Actions"));
@@ -177,7 +179,7 @@ public class AdminDashboard extends JFrame {
         statsPanel.add(logStatPanel);
         statsPanel.add(actionsPanel);
 
-        // System status panel
+        
         JPanel statusPanel = new JPanel(new BorderLayout());
         statusPanel.setBorder(BorderFactory.createTitledBorder("System Status"));
 
@@ -190,7 +192,7 @@ public class AdminDashboard extends JFrame {
 
         statusPanel.add(new JScrollPane(statusArea), BorderLayout.CENTER);
 
-        // Main layout
+        
         JPanel centerPanel = new JPanel(new BorderLayout());
         centerPanel.add(statsPanel, BorderLayout.CENTER);
         centerPanel.add(statusPanel, BorderLayout.SOUTH);
@@ -226,12 +228,12 @@ public class AdminDashboard extends JFrame {
         titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
         titleLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
 
-        // Create users table
+        
         String[] columnNames = {"ID", "Username", "Email", "Nickname", "Profile Pic"};
         usersTableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false; // Make table non-editable
+                return false; 
             }
         };
 
@@ -239,7 +241,7 @@ public class AdminDashboard extends JFrame {
         usersTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         JScrollPane tableScrollPane = new JScrollPane(usersTable);
 
-        // Action buttons
+        
         JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JButton refreshButton = new JButton("Refresh Users");
         JButton removeButton = new JButton("Remove Selected User");
@@ -254,7 +256,7 @@ public class AdminDashboard extends JFrame {
         panel.add(tableScrollPane, BorderLayout.CENTER);
         panel.add(actionPanel, BorderLayout.SOUTH);
 
-        // Initial load of users
+        
         refreshUsersTable();
 
         return panel;
@@ -267,12 +269,12 @@ public class AdminDashboard extends JFrame {
         titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
         titleLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
 
-        // Create chats table
-        String[] columnNames = {"ID", "Start Time", "End Time", "Status", "Log File"};
+        
+        String[] columnNames = {"ID", "Name", "Start Time", "End Time", "Status", "Log File"};
         chatsTableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false; // Make table non-editable
+                return false; 
             }
         };
 
@@ -280,108 +282,162 @@ public class AdminDashboard extends JFrame {
         chatsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         JScrollPane tableScrollPane = new JScrollPane(chatsTable);
 
-        // Action buttons
+        
+        JPanel createChatPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        createChatPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+        
+        JLabel chatNameLabel = new JLabel("Chat Name:");
+        JTextField chatNameField = new JTextField(20);
+        JButton createChatButton = new JButton("Create New Chat");
+        
+        createChatButton.addActionListener(e -> {
+            String chatName = chatNameField.getText().trim();
+            if (chatName.isEmpty()) {
+                JOptionPane.showMessageDialog(this, 
+                    "Please enter a name for the chat", 
+                    "Missing Chat Name", 
+                    JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            createNewChat(chatName);
+            chatNameField.setText(""); 
+        });
+        
+        createChatPanel.add(chatNameLabel);
+        createChatPanel.add(chatNameField);
+        createChatPanel.add(createChatButton);
+
+        
         JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JButton refreshButton = new JButton("Refresh Chats");
         JButton viewLogButton = new JButton("View Selected Log");
         JButton endChatButton = new JButton("End Selected Chat");
+        JButton deleteChatButton = new JButton("Delete Selected Chat");
 
         refreshButton.addActionListener(e -> refreshChatsTable());
         viewLogButton.addActionListener(e -> viewSelectedChatLog());
         endChatButton.addActionListener(e -> endSelectedChat());
+        deleteChatButton.addActionListener(e -> deleteSelectedChat());
+        
+        
+        deleteChatButton.setBackground(new Color(211, 47, 47)); 
+        deleteChatButton.setForeground(Color.WHITE);
 
         actionPanel.add(refreshButton);
         actionPanel.add(viewLogButton);
         actionPanel.add(endChatButton);
+        actionPanel.add(deleteChatButton);
 
-        panel.add(titleLabel, BorderLayout.NORTH);
+        
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.add(titleLabel, BorderLayout.NORTH);
+        topPanel.add(createChatPanel, BorderLayout.CENTER);
+        
+        panel.add(topPanel, BorderLayout.NORTH);
         panel.add(tableScrollPane, BorderLayout.CENTER);
         panel.add(actionPanel, BorderLayout.SOUTH);
 
-        // Initial load of chats
+        
         refreshChatsTable();
 
         return panel;
     }
 
     private JPanel createSubscriptionsPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JLabel titleLabel = new JLabel("Manage User Subscriptions", JLabel.CENTER);
+        
+        JLabel titleLabel = new JLabel("Subscription Management", JLabel.CENTER);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
-        titleLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
 
-        // Create top panel for subscribing users
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.setBorder(BorderFactory.createTitledBorder("Subscribe/Unsubscribe Users"));
-
-        JPanel selectionPanel = new JPanel(new GridLayout(2, 2, 10, 10));
-        selectionPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        selectionPanel.add(new JLabel("Select User:"));
+        
+        JPanel addSubscriptionPanel = new JPanel(new BorderLayout(10, 0));
+        addSubscriptionPanel.setBorder(BorderFactory.createTitledBorder("Add New Subscription"));
+        
+        
+        JPanel selectionPanel = new JPanel(new GridLayout(2, 3, 10, 5));
+        
+        JLabel userLabel = new JLabel("Select User:", JLabel.RIGHT);
         userComboBox = new JComboBox<>();
-        selectionPanel.add(userComboBox);
-
-        selectionPanel.add(new JLabel("Select Chat:"));
+        
+        JLabel chatLabel = new JLabel("Select Chat:", JLabel.RIGHT);
         chatComboBox = new JComboBox<>();
-        selectionPanel.add(chatComboBox);
-
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        
         JButton subscribeButton = new JButton("Subscribe User to Chat");
-        JButton unsubscribeButton = new JButton("Unsubscribe User from Chat");
-
+        subscribeButton.setBackground(new Color(46, 125, 50)); 
+        subscribeButton.setForeground(Color.WHITE);
+        
+        selectionPanel.add(userLabel);
+        selectionPanel.add(userComboBox);
+        selectionPanel.add(new JLabel()); 
+        selectionPanel.add(chatLabel);
+        selectionPanel.add(chatComboBox);
+        selectionPanel.add(subscribeButton);
+        
+        addSubscriptionPanel.add(selectionPanel, BorderLayout.CENTER);
+        
+        
         subscribeButton.addActionListener(e -> subscribeUserToChat());
-        unsubscribeButton.addActionListener(e -> unsubscribeUserFromChat());
-
-        buttonPanel.add(subscribeButton);
-        buttonPanel.add(unsubscribeButton);
-
-        topPanel.add(selectionPanel, BorderLayout.CENTER);
-        topPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-        // Create bottom panel with subscriptions table
-        JPanel bottomPanel = new JPanel(new BorderLayout());
-        bottomPanel.setBorder(BorderFactory.createTitledBorder("Current Subscriptions"));
-
-        String[] columnNames = {"User", "Chat", "Subscribed Date"};
+        
+        
+        JPanel subscriptionsTablePanel = new JPanel(new BorderLayout(0, 10));
+        subscriptionsTablePanel.setBorder(BorderFactory.createTitledBorder("Current Subscriptions"));
+        
+        String[] columnNames = {"User ID", "Username", "Chat ID", "Chat Name", "Subscribed Since"};
         subscriptionsTableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false; // Make table non-editable
+                return false;
             }
         };
 
         subscriptionsTable = new JTable(subscriptionsTableModel);
+        subscriptionsTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         JScrollPane tableScrollPane = new JScrollPane(subscriptionsTable);
-
-        JPanel tableActionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JButton refreshSubscriptionsButton = new JButton("Refresh Subscriptions");
-        refreshSubscriptionsButton.addActionListener(e -> refreshSubscriptionsPanel());
-        tableActionPanel.add(refreshSubscriptionsButton);
-
-        bottomPanel.add(tableScrollPane, BorderLayout.CENTER);
-        bottomPanel.add(tableActionPanel, BorderLayout.SOUTH);
-
-        // Add panels to main panel
+        
+        
+        JPanel tableActionsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        
+        JButton refreshButton = new JButton("Refresh List");
+        refreshButton.addActionListener(e -> refreshSubscriptionsPanel());
+        
+        JButton removeButton = new JButton("Remove Selected");
+        removeButton.setBackground(new Color(211, 47, 47)); 
+        removeButton.setForeground(Color.WHITE);
+        removeButton.addActionListener(e -> removeSelectedSubscription());
+        
+        tableActionsPanel.add(refreshButton);
+        tableActionsPanel.add(removeButton);
+        
+        subscriptionsTablePanel.add(tableScrollPane, BorderLayout.CENTER);
+        subscriptionsTablePanel.add(tableActionsPanel, BorderLayout.SOUTH);
+        
+        
+        JPanel mainContentPanel = new JPanel(new BorderLayout(0, 10));
+        mainContentPanel.add(addSubscriptionPanel, BorderLayout.NORTH);
+        mainContentPanel.add(subscriptionsTablePanel, BorderLayout.CENTER);
+        
         panel.add(titleLabel, BorderLayout.NORTH);
-
-        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, topPanel, bottomPanel);
-        splitPane.setDividerLocation(200);
-        panel.add(splitPane, BorderLayout.CENTER);
+        panel.add(mainContentPanel, BorderLayout.CENTER);
+        
+        
+        refreshSubscriptionsPanel();
 
         return panel;
     }
 
     private void refreshUsersTable() {
         try {
-            // Clear existing data
+            
             usersTableModel.setRowCount(0);
 
-            // Get all users
+            
             List<User> users = userDAO.getAllUsers();
 
             for (User user : users) {
-                if (user.getUsername().equals("admin")) continue; // Skip admin user
+                if (user.getUsername().equals("admin")) continue; 
 
                 Object[] row = {
                         user.getId(),
@@ -403,24 +459,31 @@ public class AdminDashboard extends JFrame {
 
     private void refreshChatsTable() {
         try {
-            // Clear existing data
+            
             chatsTableModel.setRowCount(0);
 
-            // Get all chats
+            
             List<Chat> chats = chatDAO.getAllChats();
 
+            
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            
+            
             for (Chat chat : chats) {
+                String startTime = chat.getStartTime() != null ? sdf.format(chat.getStartTime()) : "-";
+                String endTime = chat.getEndTime() != null ? sdf.format(chat.getEndTime()) : "-";
                 String status = chat.getEndTime() == null ? "Active" : "Ended";
+                String logFile = chat.getLogFile() != null ? chat.getLogFile() : "-";
+                String name = chat.getName() != null ? chat.getName() : "Chat #" + chat.getId();
 
-                Object[] row = {
+                chatsTableModel.addRow(new Object[]{
                         chat.getId(),
-                        dateFormat.format(chat.getStartTime()),
-                        chat.getEndTime() == null ? "-" : dateFormat.format(chat.getEndTime()),
+                    name,
+                    startTime,
+                    endTime,
                         status,
-                        chat.getLogFile() == null ? "-" : chat.getLogFile()
-                };
-
-                chatsTableModel.addRow(row);
+                    logFile
+                });
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
@@ -432,37 +495,52 @@ public class AdminDashboard extends JFrame {
 
     private void refreshSubscriptionsPanel() {
         try {
-            // Clear the user combo box
+            
             userComboBox.removeAllItems();
+            chatComboBox.removeAllItems();
+            subscriptionsTableModel.setRowCount(0);
+            
+            
             List<User> users = userDAO.getAllUsers();
             for (User user : users) {
-                if (!user.getUsername().equals("admin")) {
-                    userComboBox.addItem(user.getId() + ": " + user.getUsername());
+                userComboBox.addItem(user.getUsername() + " (ID: " + user.getId() + ")");
+            }
+            
+            
+            List<Chat> chats = chatDAO.getActiveChats();
+            for (Chat chat : chats) {
+                String chatName = chat.getName() != null ? chat.getName() : "Chat #" + chat.getId();
+                chatComboBox.addItem(chatName + " (ID: " + chat.getId() + ")");
+            }
+            
+            
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            
+            for (User user : users) {
+                
+                List<Chat> userChats = chatDAO.getSubscribedChats(user.getId());
+                
+                for (Chat chat : userChats) {
+                    String chatName = chat.getName() != null ? chat.getName() : "Chat #" + chat.getId();
+                    String subscriptionDate = chat.getStartTime() != null ? 
+                            dateFormat.format(chat.getStartTime()) : "N/A";
+                    
+                    subscriptionsTableModel.addRow(new Object[]{
+                        user.getId(),
+                        user.getUsername(),
+                        chat.getId(),
+                        chatName,
+                        subscriptionDate
+                    });
                 }
             }
-
-            // Clear the chat combo box
-            chatComboBox.removeAllItems();
-            List<Chat> chats = chatDAO.getAllChats();
-            for (Chat chat : chats) {
-                String status = chat.getEndTime() == null ? "Active" : "Ended";
-                chatComboBox.addItem(chat.getId() + ": " + status + " (" +
-                        dateFormat.format(chat.getStartTime()) + ")");
-            }
-
-            // Refresh the subscriptions table
-            // This would typically pull from a subscriptions table in the database
-            // For now, we're just showing a placeholder message
-            subscriptionsTableModel.setRowCount(0);
-
-            // Add placeholder data (in a real app, you'd fetch actual subscriptions)
-            subscriptionsTableModel.addRow(new Object[]{"Placeholder - Implement subscription data", "-", "-"});
-
+            
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this,
-                    "Error refreshing subscription data: " + e.getMessage(),
-                    "Error",
+            JOptionPane.showMessageDialog(this, 
+                    "Error refreshing subscriptions panel: " + e.getMessage(), 
+                    "Error", 
                     JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
         }
     }
 
@@ -493,7 +571,7 @@ public class AdminDashboard extends JFrame {
                         "Success",
                         JOptionPane.INFORMATION_MESSAGE);
 
-                // Refresh the users table
+                
                 refreshUsersTable();
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(this,
@@ -506,7 +584,7 @@ public class AdminDashboard extends JFrame {
 
     private void startNewChat() {
         try {
-            // Create a new chat in the database
+            
             Chat newChat = new Chat();
             newChat.setStartTime(new java.util.Date());
             newChat.setAdmin(adminUser);
@@ -517,10 +595,10 @@ public class AdminDashboard extends JFrame {
                     "Chat Started",
                     JOptionPane.INFORMATION_MESSAGE);
 
-            // Refresh the chats table
+            
             refreshChatsTable();
 
-            // Show the chats panel
+            
             cardLayout.show(mainPanel, "chats");
 
         } catch (Exception e) {
@@ -541,7 +619,7 @@ public class AdminDashboard extends JFrame {
             return;
         }
 
-        String logFile = (String) chatsTableModel.getValueAt(selectedRow, 4);
+        String logFile = (String) chatsTableModel.getValueAt(selectedRow, 5);
         if (logFile.equals("-")) {
             JOptionPane.showMessageDialog(this,
                     "No log file available for this chat",
@@ -551,7 +629,6 @@ public class AdminDashboard extends JFrame {
         }
 
         try {
-            // Open the log file in a new window
             new ChatLogViewer(logFile);
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
@@ -589,7 +666,7 @@ public class AdminDashboard extends JFrame {
 
         if (confirm == JOptionPane.YES_OPTION) {
             try {
-                // End the chat in the database
+                
                 Chat chat = chatDAO.findById(chatId);
                 if (chat != null) {
                     chat.setEndTime(new java.util.Date());
@@ -600,7 +677,7 @@ public class AdminDashboard extends JFrame {
                             "Success",
                             JOptionPane.INFORMATION_MESSAGE);
 
-                    // Refresh the chats table
+                    
                     refreshChatsTable();
                 }
             } catch (Exception e) {
@@ -613,80 +690,153 @@ public class AdminDashboard extends JFrame {
     }
 
     private void subscribeUserToChat() {
-        if (userComboBox.getSelectedIndex() == -1 || chatComboBox.getSelectedIndex() == -1) {
-            JOptionPane.showMessageDialog(this,
-                    "Please select both a user and a chat",
-                    "Selection Required",
-                    JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
         try {
-            // Extract user ID from selection (format is "ID: username")
-            String userSelection = (String) userComboBox.getSelectedItem();
-            int userId = Integer.parseInt(userSelection.substring(0, userSelection.indexOf(":")));
-
-            // Extract chat ID from selection (format is "ID: status (date)")
-            String chatSelection = (String) chatComboBox.getSelectedItem();
-            int chatId = Integer.parseInt(chatSelection.substring(0, chatSelection.indexOf(":")));
-
-            // Here you would call your subscription service/DAO to subscribe the user
-            // For now, we'll just show a success message
-            JOptionPane.showMessageDialog(this,
-                    "User subscribed to chat successfully",
-                    "Success",
+            
+            if (userComboBox.getSelectedItem() == null) {
+                JOptionPane.showMessageDialog(this, 
+                        "Please select a user to subscribe.", 
+                        "No User Selected", 
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            
+            if (chatComboBox.getSelectedItem() == null) {
+                JOptionPane.showMessageDialog(this, 
+                        "Please select a chat to subscribe to.", 
+                        "No Chat Selected", 
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            
+            
+            String userSelection = userComboBox.getSelectedItem().toString();
+            String chatSelection = chatComboBox.getSelectedItem().toString();
+            
+            int userId = extractIdFromSelection(userSelection);
+            int chatId = extractIdFromSelection(chatSelection);
+            
+            
+            User user = userDAO.findById(userId);
+            Chat chat = chatDAO.findById(chatId);
+            
+            if (user == null || chat == null) {
+                JOptionPane.showMessageDialog(this, 
+                        "Selected user or chat not found. Please refresh and try again.", 
+                        "Not Found", 
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            
+            List<Integer> subscribedChatIds = chatDAO.getSubscribedChatIds(userId);
+            if (subscribedChatIds.contains(chatId)) {
+                JOptionPane.showMessageDialog(this, 
+                        "User " + user.getUsername() + " is already subscribed to this chat.", 
+                        "Already Subscribed", 
+                        JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+            
+            
+            chatDAO.subscribeUserToChat(userId, chatId);
+            
+            JOptionPane.showMessageDialog(this, 
+                    "Successfully subscribed " + user.getUsername() + " to " + 
+                    (chat.getName() != null ? chat.getName() : "Chat #" + chat.getId()), 
+                    "Subscription Added", 
                     JOptionPane.INFORMATION_MESSAGE);
-
-            // Refresh the subscriptions table
+            
+            
             refreshSubscriptionsPanel();
-
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this,
-                    "Error subscribing user: " + e.getMessage(),
-                    "Error",
+            JOptionPane.showMessageDialog(this, 
+                    "Error subscribing user to chat: " + e.getMessage(), 
+                    "Error", 
                     JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
         }
     }
 
-    private void unsubscribeUserFromChat() {
-        if (userComboBox.getSelectedIndex() == -1 || chatComboBox.getSelectedIndex() == -1) {
-            JOptionPane.showMessageDialog(this,
-                    "Please select both a user and a chat",
-                    "Selection Required",
+    private void removeSelectedSubscription() {
+        
+        int selectedRow = subscriptionsTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, 
+                    "Please select a subscription to remove.", 
+                    "No Selection", 
                     JOptionPane.WARNING_MESSAGE);
             return;
         }
-
+        
         try {
-            // Extract user ID from selection (format is "ID: username")
-            String userSelection = (String) userComboBox.getSelectedItem();
-            int userId = Integer.parseInt(userSelection.substring(0, userSelection.indexOf(":")));
-
-            // Extract chat ID from selection (format is "ID: status (date)")
-            String chatSelection = (String) chatComboBox.getSelectedItem();
-            int chatId = Integer.parseInt(chatSelection.substring(0, chatSelection.indexOf(":")));
-
-            // Here you would call your subscription service/DAO to unsubscribe the user
-            // For now, we'll just show a success message
-            JOptionPane.showMessageDialog(this,
-                    "User unsubscribed from chat successfully",
-                    "Success",
-                    JOptionPane.INFORMATION_MESSAGE);
-
-            // Refresh the subscriptions table
-            refreshSubscriptionsPanel();
-
+            
+            int userId = (int) subscriptionsTableModel.getValueAt(selectedRow, 0);
+            String username = (String) subscriptionsTableModel.getValueAt(selectedRow, 1);
+            int chatId = (int) subscriptionsTableModel.getValueAt(selectedRow, 2);
+            String chatName = (String) subscriptionsTableModel.getValueAt(selectedRow, 3);
+            
+            
+            int confirm = JOptionPane.showConfirmDialog(this,
+                    "Are you sure you want to unsubscribe user '" + username + 
+                    "' from chat '" + chatName + "'?",
+                    "Confirm Unsubscription",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE);
+            
+            if (confirm == JOptionPane.YES_OPTION) {
+                
+                chatDAO.unsubscribeUserFromChat(userId, chatId);
+                
+                JOptionPane.showMessageDialog(this, 
+                        "User '" + username + "' has been unsubscribed from '" + chatName + "'", 
+                        "Subscription Removed", 
+                        JOptionPane.INFORMATION_MESSAGE);
+                
+                
+                refreshSubscriptionsPanel();
+            }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this,
-                    "Error unsubscribing user: " + e.getMessage(),
-                    "Error",
+            JOptionPane.showMessageDialog(this, 
+                    "Error removing subscription: " + e.getMessage(), 
+                    "Error", 
                     JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }
+
+    private int extractIdFromSelection(String selection) {
+        try {
+            int idStart = selection.lastIndexOf("(ID: ") + 5;
+            int idEnd = selection.lastIndexOf(")");
+            
+            if (idStart > 5 && idEnd > idStart) {
+                String idStr = selection.substring(idStart, idEnd);
+                return Integer.parseInt(idStr);
+            }
+            
+            
+            for (int i = selection.length() - 1; i >= 0; i--) {
+                if (Character.isDigit(selection.charAt(i))) {
+                    
+                    int numStart = i;
+                    while (numStart >= 0 && Character.isDigit(selection.charAt(numStart))) {
+                        numStart--;
+                    }
+                    numStart++; 
+                    
+                    return Integer.parseInt(selection.substring(numStart, i + 1));
+                }
+            }
+            
+            throw new IllegalArgumentException("No ID found in: " + selection);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Could not extract ID from: " + selection);
         }
     }
 
     private int getUserCount() {
         try {
-            return userDAO.getAllUsers().size() - 1; // Exclude admin
+            return userDAO.getAllUsers().size() - 1; 
         } catch (Exception e) {
             return 0;
         }
@@ -718,7 +868,116 @@ public class AdminDashboard extends JFrame {
         new LoginForm();
     }
 
-    // Helper class for Hibernate access
+    private void createNewChat(String chatName) {
+        try {
+            // Create logs directory if it doesn't exist
+            File logsDir = new File("logs");
+            if (!logsDir.exists()) {
+                boolean created = logsDir.mkdir();
+                if (!created) {
+                    throw new IOException("Failed to create logs directory");
+                }
+            }
+            
+            // Create a new Chat object
+            Chat newChat = new Chat();
+            newChat.setStartTime(new java.util.Date());
+            newChat.setAdmin(adminUser);
+            newChat.setName(chatName);
+            
+            // Generate a log file name with timestamp
+            String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+            String logFileName = "logs/chat_" + chatName.replaceAll("[^a-zA-Z0-9]", "_") + "_" + timestamp + ".txt";
+            newChat.setLogFile(logFileName);
+            
+            // Initialize the log file with header information including identifiers
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(logFileName))) {
+                writer.write("[HEADER]Chat '" + chatName + "' created at " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+                writer.newLine();
+                writer.write("[ADMIN]Created by admin: " + adminUser.getUsername());
+                writer.newLine();
+                writer.write("[SEPARATOR]-------------------------------------------");
+                writer.newLine();
+                writer.flush(); // Ensure content is written to disk
+            } catch (IOException e) {
+                System.err.println("Error creating chat log file: " + e.getMessage());
+                e.printStackTrace();
+                throw e; // Re-throw to be caught by outer try-catch
+            }
+            
+            // Save the chat to the database
+            chatDAO.saveChat(newChat);
+
+            JOptionPane.showMessageDialog(this,
+                    "New chat created successfully! Chat ID: " + newChat.getId(),
+                    "Chat Created",
+                    JOptionPane.INFORMATION_MESSAGE);
+
+            // Refresh the chats table
+            refreshChatsTable();
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                    "Error creating new chat: " + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }
+
+    private void deleteSelectedChat() {
+        int selectedRow = chatsTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this,
+                    "Please select a chat to delete",
+                    "No Selection",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        int chatId = (int) chatsTableModel.getValueAt(selectedRow, 0);
+        String chatName = (String) chatsTableModel.getValueAt(selectedRow, 1);
+        String status = (String) chatsTableModel.getValueAt(selectedRow, 4);
+        
+        
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Are you sure you want to delete chat '" + chatName + "'?\n" +
+                "This will permanently delete all chat data and log files.\n" +
+                (status.equals("Active") ? "WARNING: This chat is currently active!" : ""),
+                "Confirm Deletion",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
+        
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                
+                if (status.equals("Active")) {
+                    String logFileName = "chat_" + chatId + "_" + 
+                            new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date()) + ".txt";
+                    chatDAO.endChat(chatId, logFileName);
+                }
+                
+                
+                chatDAO.deleteChat(chatId);
+                
+                JOptionPane.showMessageDialog(this,
+                        "Chat deleted successfully!",
+                        "Chat Deleted",
+                        JOptionPane.INFORMATION_MESSAGE);
+                
+                
+                refreshChatsTable();
+                
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this,
+                        "Error deleting chat: " + e.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    
     private static class HibernateUtil {
         public static org.hibernate.SessionFactory getSessionFactory() {
             try {

@@ -1,6 +1,9 @@
 package model;
 
 import javax.persistence.*;
+import java.util.HashSet;
+import java.util.Set;
+
 @Entity
 @Table(name = "users")
 public class User {
@@ -20,7 +23,15 @@ public class User {
     private String nickname;
     private String profilePic;
 
-    // Getters and setters
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "user_chat_subscriptions",
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "chat_id")
+    )
+    private Set<Chat> subscribedChats = new HashSet<>();
+
+    
     public int getId() { return id; }
 
     public String getEmail() { return email; }
@@ -37,4 +48,23 @@ public class User {
 
     public String getProfilePic() { return profilePic; }
     public void setProfilePic(String profilePic) { this.profilePic = profilePic; }
+
+    public Set<Chat> getSubscribedChats() {
+        return subscribedChats;
+    }
+
+    public void setSubscribedChats(Set<Chat> subscribedChats) {
+        this.subscribedChats = subscribedChats;
+    }
+
+    
+    public void addSubscription(Chat chat) {
+        this.subscribedChats.add(chat);
+        chat.getSubscribedUsers().add(this);
+    }
+
+    public void removeSubscription(Chat chat) {
+        this.subscribedChats.remove(chat);
+        chat.getSubscribedUsers().remove(this);
+    }
 }

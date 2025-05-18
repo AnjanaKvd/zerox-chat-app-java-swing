@@ -13,6 +13,9 @@ import java.awt.image.BufferedImage;
 import java.rmi.RemoteException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 public class ChatWindow extends JFrame {
     private JTextArea chatArea;
@@ -182,7 +185,10 @@ public class ChatWindow extends JFrame {
         if (userListPanel != null) {
             userListPanel.removeAll();
             
-            for (String user : users) {
+            // Use HashSet to filter duplicates (just in case)
+            Set<String> uniqueUsers = new HashSet<>(Arrays.asList(users));
+            
+            for (String user : uniqueUsers) {
                 JLabel userLabel = new JLabel(user, userIcon, JLabel.LEFT);
                 userLabel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
                 userListPanel.add(userLabel);

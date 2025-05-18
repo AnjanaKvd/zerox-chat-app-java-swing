@@ -1,0 +1,36 @@
+[HEADER]Chat 'day 1' created at 2025-05-18 23:06:20
+[ADMIN]Created by admin: admin
+[SEPARATOR]-------------------------------------------
+[JOIN]anj has joined : 2025-05-18 23:06:50
+[MSG]anj: hii
+[MSG]anj: hello
+[MSG]anj: whats going
+[LEAVE]anj left : 2025-05-18 23:07:06
+[JOIN]anj has joined : 2025-05-18 23:07:09
+[LEAVE]anj left : 2025-05-18 23:07:14
+[JOIN]avishka has joined : 2025-05-18 23:07:35
+[MSG]avishka: hello
+[JOIN]anj has joined : 2025-05-18 23:08:34
+[MSG]avishka: hi
+[LEAVE]anj left : 2025-05-18 23:09:01
+[JOIN]anj has joined : 2025-05-18 23:09:05
+[LEAVE]avishka left : 2025-05-18 23:09:07
+[MSG]anj: sdsad
+[JOIN]avishka has joined : 2025-05-18 23:09:15
+[MSG]avishka: sdasdasdasdsa
+[MSG]anj: sdasdasdsad
+[JOIN]avishka has joined : 2025-05-18 23:09:40
+[LEAVE]anj left : 2025-05-18 23:09:47
+[JOIN]anj has joined : 2025-05-18 23:09:53
+[MSG]anj: hjkhk
+[MSG]anj: lkl
+[MSG]avishka: kkklk
+[LEAVE]avishka left : 2025-05-18 23:10:29
+[LEAVE]anj left : 2025-05-18 23:10:34
+[JOIN]avishka has joined : 2025-05-18 23:10:39
+[JOIN]anj has joined : 2025-05-19 00:16:50
+[JOIN]Avishka has joined : 2025-05-19 00:17:06
+[LEAVE]anj left : 2025-05-19 00:17:11
+[LEAVE]Avishka left : 2025-05-19 00:17:30
+[JOIN]anj has joined : 2025-05-19 00:20:57
+[LEAVE]anj left : 2025-05-19 00:20:59

@@ -619,7 +619,7 @@ public class AdminDashboard extends JFrame {
             return;
         }
 
-        String logFile = (String) chatsTableModel.getValueAt(selectedRow, 4);
+        String logFile = (String) chatsTableModel.getValueAt(selectedRow, 5);
         if (logFile.equals("-")) {
             JOptionPane.showMessageDialog(this,
                     "No log file available for this chat",
@@ -629,7 +629,6 @@ public class AdminDashboard extends JFrame {
         }
 
         try {
-            
             new ChatLogViewer(logFile);
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
@@ -871,36 +870,42 @@ public class AdminDashboard extends JFrame {
 
     private void createNewChat(String chatName) {
         try {
-            
+            // Create logs directory if it doesn't exist
             File logsDir = new File("logs");
             if (!logsDir.exists()) {
-                logsDir.mkdir();
+                boolean created = logsDir.mkdir();
+                if (!created) {
+                    throw new IOException("Failed to create logs directory");
+                }
             }
             
-            
+            // Create a new Chat object
             Chat newChat = new Chat();
             newChat.setStartTime(new java.util.Date());
             newChat.setAdmin(adminUser);
             newChat.setName(chatName);
             
-            
+            // Generate a log file name with timestamp
             String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
             String logFileName = "logs/chat_" + chatName.replaceAll("[^a-zA-Z0-9]", "_") + "_" + timestamp + ".txt";
             newChat.setLogFile(logFileName);
             
-            
+            // Initialize the log file with header information including identifiers
             try (BufferedWriter writer = new BufferedWriter(new FileWriter(logFileName))) {
-                writer.write("Chat '" + chatName + "' created at " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+                writer.write("[HEADER]Chat '" + chatName + "' created at " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
                 writer.newLine();
-                writer.write("Created by admin: " + adminUser.getUsername());
+                writer.write("[ADMIN]Created by admin: " + adminUser.getUsername());
                 writer.newLine();
-                writer.write("-------------------------------------------");
+                writer.write("[SEPARATOR]-------------------------------------------");
                 writer.newLine();
+                writer.flush(); // Ensure content is written to disk
             } catch (IOException e) {
                 System.err.println("Error creating chat log file: " + e.getMessage());
+                e.printStackTrace();
+                throw e; // Re-throw to be caught by outer try-catch
             }
             
-            
+            // Save the chat to the database
             chatDAO.saveChat(newChat);
 
             JOptionPane.showMessageDialog(this,
@@ -908,7 +913,7 @@ public class AdminDashboard extends JFrame {
                     "Chat Created",
                     JOptionPane.INFORMATION_MESSAGE);
 
-            
+            // Refresh the chats table
             refreshChatsTable();
 
         } catch (Exception e) {
@@ -916,6 +921,7 @@ public class AdminDashboard extends JFrame {
                     "Error creating new chat: " + e.getMessage(),
                     "Error",
                     JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
         }
     }
 

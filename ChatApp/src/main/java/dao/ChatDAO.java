@@ -113,19 +113,19 @@ public class ChatDAO {
             
             Chat chat = session.get(Chat.class, chatId);
             if (chat != null) {
-                // Get log file path before deleting
+                
                 logFilePath = chat.getLogFile();
                 
-                // Clear the subscriptions first
+                
                 String clearSubscriptionsHql = "DELETE FROM user_chat_subscriptions WHERE chat_id = :chatId";
                 session.createNativeQuery(clearSubscriptionsHql)
                         .setParameter("chatId", chatId)
                         .executeUpdate();
                 
-                // Now delete the chat
+                
                 session.delete(chat);
                 
-                // Commit transaction
+                
                 transaction.commit();
             }
         } catch (Exception e) {
@@ -137,7 +137,7 @@ public class ChatDAO {
             throw e;
         }
         
-        // Delete the log file outside the transaction
+        
         if (logFilePath != null && !logFilePath.isEmpty()) {
             try {
                 File logFile = new File(logFilePath);
@@ -146,7 +146,7 @@ public class ChatDAO {
                         System.out.println("Chat log file deleted: " + logFilePath);
                     } else {
                         System.err.println("Failed to delete chat log file: " + logFilePath);
-                        // Try alternative method
+                        
                         Files.deleteIfExists(logFile.toPath());
                     }
                 } else {
@@ -155,7 +155,7 @@ public class ChatDAO {
             } catch (Exception e) {
                 System.err.println("Error deleting log file: " + e.getMessage());
                 e.printStackTrace();
-                // Don't rethrow - we completed the DB transaction successfully
+                
             }
         }
     }
@@ -218,15 +218,15 @@ public class ChatDAO {
     public List<Integer> getSubscribedChatIds(int userId) {
         List<Integer> chatIds = new ArrayList<>();
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            // Get the user with their subscribed chats
+            
             User user = session.get(User.class, userId);
             if (user != null) {
-                // Manual approach to avoid lazy loading issues
+                
                 String sql = "SELECT chat_id FROM user_chat_subscriptions WHERE user_id = :userId";
                 Query<Object> query = session.createNativeQuery(sql);
                 query.setParameter("userId", userId);
                 
-                // Convert results to integers manually
+                
                 List<Object> results = query.getResultList();
                 for (Object obj : results) {
                     if (obj instanceof Number) {
@@ -237,7 +237,7 @@ public class ChatDAO {
             return chatIds;
         } catch (Exception e) {
             e.printStackTrace();
-            return chatIds; // Return empty list on error
+            return chatIds; 
         }
     }
 }

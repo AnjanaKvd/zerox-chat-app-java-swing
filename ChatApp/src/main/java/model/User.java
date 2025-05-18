@@ -31,7 +31,7 @@ public class User {
     )
     private Set<Chat> subscribedChats = new HashSet<>();
 
-    // Getters and setters
+    
     public int getId() { return id; }
 
     public String getEmail() { return email; }
@@ -57,7 +57,7 @@ public class User {
         this.subscribedChats = subscribedChats;
     }
 
-    // Helper methods for managing the bidirectional relationship
+    
     public void addSubscription(Chat chat) {
         this.subscribedChats.add(chat);
         chat.getSubscribedUsers().add(this);

@@ -29,7 +29,7 @@ public class Chat {
     
     private String name;
     
-    // Getters and setters
+    
     public int getId() {
         return id;
     }

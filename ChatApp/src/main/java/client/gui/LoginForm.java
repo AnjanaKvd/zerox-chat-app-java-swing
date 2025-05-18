@@ -20,7 +20,7 @@ public class LoginForm extends JFrame {
     private JButton registerButton;
     private final UserDAO userDAO;
     
-    // Colors
+    
     private final Color PRIMARY_COLOR = new Color(25, 118, 210);
     private final Color BACKGROUND_COLOR = new Color(245, 246, 248);
     private final Color TEXT_COLOR = new Color(33, 33, 33);
@@ -29,10 +29,10 @@ public class LoginForm extends JFrame {
     public LoginForm() {
         this.userDAO = new UserDAO();
         
-        // Set FlatLightLaf Look and Feel
+        
         try {
             UIManager.setLookAndFeel(new FlatLightLaf());
-            // Configure rounded button style
+            
             UIManager.put("Button.arc", 10);
             UIManager.put("Component.arrowType", "chevron");
             UIManager.put("Component.innerFocusWidth", 1);
@@ -43,7 +43,7 @@ public class LoginForm extends JFrame {
             System.err.println("Failed to initialize FlatLightLaf");
         }
         
-        // Setup window
+        
         setTitle("Chat Application");
         setSize(400, 550);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -58,17 +58,17 @@ public class LoginForm extends JFrame {
     }
     
     private void initComponents() {
-        // Username field
+        
         usernameField = new JTextField(20);
         usernameField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         usernameField.setMargin(new Insets(8, 10, 8, 10));
         
-        // Password field
+        
         passwordField = new JPasswordField(20);
         passwordField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         passwordField.setMargin(new Insets(8, 10, 8, 10));
         
-        // Login button
+        
         loginButton = new JButton("Login");
         loginButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
         loginButton.setForeground(BUTTON_TEXT_COLOR);
@@ -78,7 +78,7 @@ public class LoginForm extends JFrame {
         loginButton.setPreferredSize(new Dimension(120, 40));
         loginButton.addActionListener(e -> attemptLogin());
         
-        // Register button
+        
         registerButton = new JButton("Create New Account");
         registerButton.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         registerButton.setForeground(PRIMARY_COLOR);
@@ -94,17 +94,17 @@ public class LoginForm extends JFrame {
     }
     
     private void layoutComponents() {
-        // Main panel
+        
         JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BorderLayout());
         mainPanel.setBackground(BACKGROUND_COLOR);
         mainPanel.setBorder(new EmptyBorder(30, 40, 15, 40));
         
-        // Header panel
+        
         JPanel headerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         headerPanel.setBackground(BACKGROUND_COLOR);
 
-        // App logo
+        
         ImageIcon logoIcon = new ImageIcon(getClass().getResource("/images/chatapp.png"));
         Image scaledLogo = logoIcon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH);
         JLabel logoLabel = new JLabel(new ImageIcon(scaledLogo));
@@ -118,7 +118,7 @@ public class LoginForm extends JFrame {
         headerPanel.add(titleLabel);
 
 
-        // Form panel
+        
         JPanel formPanel = new JPanel();
         formPanel.setLayout(new GridBagLayout());
         formPanel.setBackground(BACKGROUND_COLOR);
@@ -126,7 +126,7 @@ public class LoginForm extends JFrame {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(8, 0, 8, 0);
         
-        // Username label and field
+        
         JLabel usernameLabel = new JLabel("Username");
         usernameLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         usernameLabel.setForeground(TEXT_COLOR);
@@ -142,7 +142,7 @@ public class LoginForm extends JFrame {
         gbc.weightx = 1.0;
         formPanel.add(usernameField, gbc);
         
-        // Password label and field
+        
         JLabel passwordLabel = new JLabel("Password");
         passwordLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         passwordLabel.setForeground(TEXT_COLOR);
@@ -157,19 +157,19 @@ public class LoginForm extends JFrame {
         gbc.insets = new Insets(8, 0, 8, 0);
         formPanel.add(passwordField, gbc);
         
-        // Login button panel
+        
         JPanel loginButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         loginButtonPanel.setBackground(BACKGROUND_COLOR);
         loginButtonPanel.setBorder(new EmptyBorder(20, 0, 10, 0));
         loginButtonPanel.add(loginButton);
         
-        // Register button panel
+        
         JPanel registerButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         registerButtonPanel.setBackground(BACKGROUND_COLOR);
         registerButtonPanel.setBorder(new EmptyBorder(5, 0, 20, 0));
         registerButtonPanel.add(registerButton);
         
-        // Footer panel
+        
         JPanel footerPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         footerPanel.setBackground(BACKGROUND_COLOR);
         
@@ -178,7 +178,7 @@ public class LoginForm extends JFrame {
         developerLabel.setForeground(new Color(120, 120, 120));
         footerPanel.add(developerLabel);
         
-        // Assemble all panels
+        
         JPanel contentPanel = new JPanel();
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
         contentPanel.setBackground(BACKGROUND_COLOR);
@@ -209,14 +209,14 @@ public class LoginForm extends JFrame {
             User user = userDAO.authenticateUser(username, password);
             
             if (user != null) {
-                // Successful login
+                
                 dispose();
                 
                 if (username.equals("admin")) {
-                    // Admin login
+                    
                     new AdminDashboard(user);
                 } else {
-                    // Regular user login
+                    
                     new UserDashboard(user);
                 }
             } else {

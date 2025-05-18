@@ -27,15 +27,15 @@ public class ChatServerImpl extends UnicastRemoteObject implements ChatServer {
     private final UserDAO userDAO;
     private final ChatSubscriptionManager subscriptionManager;
     
-    // Add these fields to track chats by ID
+    
     private Map<Integer, List<ChatClient>> chatRooms = new HashMap<>();
     private Map<ChatClient, Integer> clientChatMap = new HashMap<>();
     
     public ChatServerImpl(ChatDAO chatDAO) throws RemoteException {
         super();
         this.chatDAO = chatDAO;
-        this.userDAO = null; // Not used in this constructor
-        this.subscriptionManager = null; // Not used in this constructor
+        this.userDAO = null; 
+        this.subscriptionManager = null; 
         connectedClients = new ConcurrentHashMap<>();
         sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         chatLog = new ArrayList<>();
@@ -61,17 +61,17 @@ public class ChatServerImpl extends UnicastRemoteObject implements ChatServer {
             startChat();
         }
         
-        // Notify all clients about the new user
+        
         String joinMessage = nickname + " has joined : " + getCurrentTime();
         broadcastMessage(joinMessage);
         
-        // Update user list for all clients
+        
         updateAllClientUserLists();
     }
     
     @Override
     public void sendMessage(String message, String nickname) throws RemoteException {
-        // Find the chat this client is in
+        
         Integer chatId = null;
         ChatClient senderClient = null;
         
@@ -86,18 +86,18 @@ public class ChatServerImpl extends UnicastRemoteObject implements ChatServer {
         if (chatId != null) {
             String formattedMessage = nickname + ": " + message;
             
-            // Log the message first to ensure it's saved
+            
             Chat chat = chatDAO.findById(chatId);
             if (chat != null) {
                 logMessageToChat(formattedMessage, chat);
             }
             
-            // Then broadcast to all clients in the chat
+            
             broadcastMessageToChat(formattedMessage, chatId);
             
-            // Handle "Bye" command separately
+            
             if (message.equalsIgnoreCase("Bye") && senderClient != null) {
-                // The client will call removeClient explicitly
+                
             }
         }
     }
@@ -106,49 +106,49 @@ public class ChatServerImpl extends UnicastRemoteObject implements ChatServer {
     public void removeClient(ChatClient client, String nickname) throws RemoteException {
         Integer chatId = clientChatMap.get(client);
         if (chatId != null) {
-            // Notify remaining clients that a user left
+            
             String leaveMessage = nickname + " left : " + getCurrentTime();
             broadcastMessageToChat(leaveMessage, chatId);
             
-            // Remove the client from the chat room
+            
             removeClientFromChat(client, chatId);
             
-            // Update user list for remaining clients
+            
             updateChatUserList(chatId);
             
-            // Log the leave message
+            
             Chat chat = chatDAO.findById(chatId);
             if (chat != null) {
                 logMessageToChat(leaveMessage, chat);
             }
         } else {
-            // If chatId is null, just remove from connected clients
+            
             connectedClients.remove(client);
         }
     }
     
     @Override
     public void registerClientToChat(ChatClient client, String nickname, int chatId) throws RemoteException {
-        // Add client to the connected clients
+        
         connectedClients.put(client, nickname);
         
-        // Add client to the specific chat room
+        
         chatRooms.computeIfAbsent(chatId, k -> new ArrayList<>()).add(client);
         clientChatMap.put(client, chatId);
         
-        // Look up chat from chatDAO
+        
         Chat chat = chatDAO.findById(chatId);
         if (chat != null) {
-            // Join message
+            
             String joinMessage = nickname + " has joined : " + getCurrentTime();
             
-            // Log the join message to the chat's log file
+            
             logMessageToChat(joinMessage, chat);
             
-            // Notify everyone in this chat that a new user joined
+            
             broadcastMessageToChat(joinMessage, chatId);
             
-            // Update user list for all clients in this chat
+            
             updateChatUserList(chatId);
         }
     }
@@ -158,7 +158,7 @@ public class ChatServerImpl extends UnicastRemoteObject implements ChatServer {
             try {
                 entry.getKey().receiveMessage(message);
             } catch (RemoteException e) {
-                // If we can't reach the client, remove them
+                
                 connectedClients.remove(entry.getKey());
             }
         }
@@ -171,7 +171,7 @@ public class ChatServerImpl extends UnicastRemoteObject implements ChatServer {
             try {
                 client.updateUserList(userList);
             } catch (RemoteException e) {
-                // If we can't reach the client, remove them
+                
                 connectedClients.remove(client);
             }
         }
@@ -181,15 +181,15 @@ public class ChatServerImpl extends UnicastRemoteObject implements ChatServer {
         chatActive = true;
         chatStartTime = getCurrentTime();
         
-        // Create a new chat record
+        
         currentChat = new Chat();
         currentChat.setStartTime(new Date());
         chatDAO.saveChat(currentChat);
         
-        // Log start time
+        
         chatLog.add("Chat started at: " + chatStartTime);
         
-        // Notify all connected clients
+        
         for (ChatClient client : connectedClients.keySet()) {
             try {
                 client.notifyChatStarted(chatStartTime);
@@ -203,21 +203,21 @@ public class ChatServerImpl extends UnicastRemoteObject implements ChatServer {
         chatActive = false;
         String endTime = getCurrentTime();
         
-        // Log end time
+        
         chatLog.add("Chat ended at: " + endTime);
         
-        // Save chat to file
+        
         String logFileName = "chat_" + chatStartTime.replace(":", "-").replace(" ", "_") + ".txt";
         saveLogToFile(logFileName);
         
-        // Update chat record in database
+        
         if (currentChat != null) {
             currentChat.setEndTime(new Date());
             currentChat.setLogFile(logFileName);
             chatDAO.saveChat(currentChat);
         }
         
-        // Clear chat log
+        
         chatLog.clear();
     }
 
@@ -247,7 +247,7 @@ public class ChatServerImpl extends UnicastRemoteObject implements ChatServer {
         return sdf.format(new Date());
     }
 
-    // Helper method to broadcast message to specific chat
+    
     private void broadcastMessageToChat(String message, int chatId) {
         List<ChatClient> clients = chatRooms.get(chatId);
         if (clients != null) {
@@ -255,14 +255,14 @@ public class ChatServerImpl extends UnicastRemoteObject implements ChatServer {
                 try {
                     client.receiveMessage(message);
                 } catch (RemoteException e) {
-                    // If we can't reach the client, remove them
+                    
                     removeClientFromChat(client, chatId);
                 }
             }
         }
     }
 
-    // Helper method to update user list for a specific chat
+    
     private void updateChatUserList(int chatId) {
         List<ChatClient> clients = chatRooms.get(chatId);
         if (clients != null && !clients.isEmpty()) {
@@ -279,14 +279,14 @@ public class ChatServerImpl extends UnicastRemoteObject implements ChatServer {
                 try {
                     client.updateUserList(usersArray);
                 } catch (RemoteException e) {
-                    // If we can't reach the client, remove them
+                    
                     removeClientFromChat(client, chatId);
                 }
             }
         }
     }
 
-    // Helper method to remove client from a specific chat
+    
     private void removeClientFromChat(ChatClient client, int chatId) {
         List<ChatClient> clients = chatRooms.get(chatId);
         if (clients != null) {
@@ -299,9 +299,9 @@ public class ChatServerImpl extends UnicastRemoteObject implements ChatServer {
         connectedClients.remove(client);
     }
 
-    // Helper method to log messages to chat file
+    
     private synchronized void logMessageToChat(String message, Chat chat) {
-        // Create logs directory if it doesn't exist
+        
         File logsDir = new File("logs");
         if (!logsDir.exists()) {
             logsDir.mkdir();
@@ -309,17 +309,17 @@ public class ChatServerImpl extends UnicastRemoteObject implements ChatServer {
         
         String logFile = chat.getLogFile();
         if (logFile == null || logFile.isEmpty()) {
-            // This should not happen as we create the log file during chat creation
-            // But just in case, create one now
+            
+            
             String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
             String chatName = chat.getName() != null ? chat.getName() : "Chat_" + chat.getId();
             logFile = "logs/chat_" + chatName.replaceAll("[^a-zA-Z0-9]", "_") + "_" + timestamp + ".txt";
             
-            // Update chat record
+            
             chat.setLogFile(logFile);
             chatDAO.saveChat(chat);
             
-            // Initialize the log file with a header
+            
             try (BufferedWriter writer = new BufferedWriter(new FileWriter(logFile))) {
                 writer.write("Chat '" + chatName + "' created at " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
                 writer.newLine();
@@ -329,11 +329,11 @@ public class ChatServerImpl extends UnicastRemoteObject implements ChatServer {
                 writer.newLine();
             } catch (IOException e) {
                 System.err.println("Error creating chat log file: " + e.getMessage());
-                return; // Exit if we couldn't create the file
+                return; 
             }
         }
         
-        // Append to log file with synchronization
+        
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(logFile, true))) {
             writer.write(message);
             writer.newLine();

@@ -29,9 +29,9 @@ public class ChatCard extends JPanel {
     private JLabel timeLabel;
     private JLabel unreadBadge;
     
-    // Placeholder values until we implement messages
+    
     private String placeholderMessage = "No messages yet";
-    private int unreadCount = 0; // For design purposes
+    private int unreadCount = 0; 
     
     public ChatCard(Chat chat, User currentUser) {
         this.chat = chat;
@@ -61,18 +61,18 @@ public class ChatCard extends JPanel {
     }
     
     private void initComponents() {
-        // Avatar section
+        
         User admin = chat.getAdmin();
         avatarLabel = new JLabel();
         avatarLabel.setPreferredSize(new Dimension(40, 40));
         setAvatar(admin);
         
-        // Main content section
+        
         JPanel contentPanel = new JPanel(new GridBagLayout());
         contentPanel.setOpaque(false);
         GridBagConstraints gbc = new GridBagConstraints();
         
-        // Chat name - use name field if available
+        
         String chatName;
         if (chat.getName() != null && !chat.getName().isEmpty()) {
             chatName = chat.getName();
@@ -90,7 +90,7 @@ public class ChatCard extends JPanel {
         gbc.anchor = GridBagConstraints.WEST;
         contentPanel.add(chatNameLabel, gbc);
         
-        // Time
+        
         timeLabel = new JLabel(TIME_FORMAT.format(chat.getStartTime() != null ? chat.getStartTime() : new Date()));
         timeLabel.setFont(CONTENT_FONT);
         timeLabel.setForeground(Color.GRAY);
@@ -99,7 +99,7 @@ public class ChatCard extends JPanel {
         gbc.anchor = GridBagConstraints.EAST;
         contentPanel.add(timeLabel, gbc);
         
-        // Latest message - placeholder for now
+        
         messageLabel = new JLabel(placeholderMessage);
         messageLabel.setFont(CONTENT_FONT);
         messageLabel.setForeground(Color.GRAY);
@@ -109,8 +109,8 @@ public class ChatCard extends JPanel {
         gbc.anchor = GridBagConstraints.WEST;
         contentPanel.add(messageLabel, gbc);
         
-        // Unread badge - Demo purposes
-        if (Math.random() > 0.5) { // Randomly show unread badge for demo
+        
+        if (Math.random() > 0.5) { 
             unreadCount = (int)(Math.random() * 10) + 1;
             unreadBadge = new JLabel(String.valueOf(unreadCount));
             unreadBadge.setOpaque(true);
@@ -120,7 +120,7 @@ public class ChatCard extends JPanel {
             unreadBadge.setHorizontalAlignment(SwingConstants.CENTER);
             unreadBadge.setPreferredSize(new Dimension(20, 20));
             
-            // Make the badge circular
+            
             unreadBadge.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
             
             gbc.gridx = 1;
@@ -132,7 +132,7 @@ public class ChatCard extends JPanel {
         add(avatarLabel, BorderLayout.WEST);
         add(contentPanel, BorderLayout.CENTER);
         
-        // Load latest message and unread count from log file
+        
         loadLatestMessageAndUnreadCount();
     }
     
@@ -155,16 +155,16 @@ public class ChatCard extends JPanel {
         }
         
         if (avatar == null) {
-            // Create a default avatar with the first letter
+            
             BufferedImage img = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
             Graphics2D g2d = img.createGraphics();
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             
-            // Fill background
+            
             g2d.setColor(new Color(52, 152, 219));
             g2d.fillOval(0, 0, size, size);
             
-            // Draw text
+            
             g2d.setColor(Color.WHITE);
             String initial = user != null && user.getNickname() != null && !user.getNickname().isEmpty() ? 
                              user.getNickname().substring(0, 1).toUpperCase() : "C";
@@ -178,7 +178,7 @@ public class ChatCard extends JPanel {
             
             avatar = new ImageIcon(img);
         } else {
-            // Scale and make circular
+            
             Image sourceImage = avatar.getImage();
             Image scaledImage = sourceImage.getScaledInstance(size, size, Image.SCALE_SMOOTH);
             
@@ -203,11 +203,11 @@ public class ChatCard extends JPanel {
                 try {
                     java.util.List<String> lines = java.nio.file.Files.readAllLines(file.toPath());
                     if (!lines.isEmpty()) {
-                        // Get latest message
+                        
                         String latestMsg = null;
                         for (int i = lines.size() - 1; i >= 0; i--) {
                             String line = lines.get(i);
-                            // Skip system messages about joining/leaving
+                            
                             if (!line.contains(" joined the chat at: ") && 
                                 !line.contains(" left the chat at: ") &&
                                 !line.contains("Chat started at: ") &&
@@ -218,26 +218,26 @@ public class ChatCard extends JPanel {
                         }
                         
                         if (latestMsg != null) {
-                            // Truncate if too long
+                            
                             if (latestMsg.length() > 30) {
                                 latestMsg = latestMsg.substring(0, 27) + "...";
                             }
                             messageLabel.setText(latestMsg);
                             
-                            // Try to extract time from message for time label
+                            
                             try {
                                 String timeStr = latestMsg.substring(latestMsg.lastIndexOf(":") - 2, latestMsg.lastIndexOf(":") + 3);
                                 timeLabel.setText(timeStr);
                             } catch (Exception e) {
-                                // If format doesn't match, use chat start time
+                                
                                 timeLabel.setText(TIME_FORMAT.format(chat.getStartTime()));
                             }
                         }
                         
-                        // Calculate unread count
+                        
                         int unread = 0;
                         
-                        // Find last time user left the chat
+                        
                         String lastLeavePattern = currentUser.getNickname() + " left the chat at: ";
                         String lastLeaveTime = null;
                         
@@ -248,22 +248,22 @@ public class ChatCard extends JPanel {
                             }
                         }
                         
-                        // If user left before, count messages after that time
+                        
                         if (lastLeaveTime != null) {
                             for (int i = lines.size() - 1; i >= 0; i--) {
                                 String line = lines.get(i);
                                 
-                                // Skip system messages and own messages
+                                
                                 if (!line.contains(" joined the chat at: ") && 
                                     !line.contains(" left the chat at: ") &&
                                     !line.contains("Chat started at: ") &&
                                     !line.contains("Chat ended at: ") &&
                                     !line.startsWith(currentUser.getNickname() + ": ")) {
                                     
-                                    // Check if message is after user left
+                                    
                                     try {
-                                        // Try to extract message time - this is simplified and might need adjusting
-                                        // based on actual message format
+                                        
+                                        
                                         int timeIndex = line.lastIndexOf(":");
                                         if (timeIndex > 0 && timeIndex < line.length() - 1) {
                                             String msgTime = line.substring(timeIndex - 8, timeIndex + 3);
@@ -272,13 +272,13 @@ public class ChatCard extends JPanel {
                                             }
                                         }
                                     } catch (Exception e) {
-                                        // If we can't determine time, assume it's unread
+                                        
                                         unread++;
                                     }
                                 }
                             }
                         } else {
-                            // If user never left, count all messages not from user
+                            
                             for (String line : lines) {
                                 if (!line.contains(" joined the chat at: ") && 
                                     !line.contains(" left the chat at: ") &&
@@ -290,7 +290,7 @@ public class ChatCard extends JPanel {
                             }
                         }
                         
-                        // Update unread badge if needed
+                        
                         if (unread > 0) {
                             updateUnreadBadge(unread);
                         }
@@ -305,7 +305,7 @@ public class ChatCard extends JPanel {
     private void updateUnreadBadge(int count) {
         this.unreadCount = count;
         
-        // Remove existing badge if present
+        
         for (Component comp : getComponents()) {
             if (comp == unreadBadge) {
                 remove(comp);
@@ -313,7 +313,7 @@ public class ChatCard extends JPanel {
             }
         }
         
-        // Create and add new badge
+        
         unreadBadge = new JLabel(String.valueOf(count));
         unreadBadge.setOpaque(true);
         unreadBadge.setBackground(BADGE_COLOR);
@@ -323,7 +323,7 @@ public class ChatCard extends JPanel {
         unreadBadge.setPreferredSize(new Dimension(20, 20));
         unreadBadge.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
         
-        // Add badge to top-right corner
+        
         setLayout(new BorderLayout());
         add(unreadBadge, BorderLayout.EAST);
         

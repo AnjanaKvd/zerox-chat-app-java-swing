@@ -732,7 +732,7 @@ public class UserDashboard extends JFrame {
         }
     }
 
-    // Add a method to update the online users list
+  
     public void updateUserList(String[] users) {
         if (onlineUsersPanel != null) {
             onlineUsersPanel.removeAll();

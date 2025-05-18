@@ -35,18 +35,18 @@ public class ChatWindow extends JFrame {
         this.currentChat = chat;
         this.userIcon = new ImageIcon(createUserIcon(16));
         
-        // Set the chat window in the client
+        
         if (client != null) {
             client.setChatWindow(this);
         }
         
-        // Setup window
+        
         setTitle("Chat - " + (chat.getAdmin() != null ? chat.getAdmin().getNickname() : "Chat #" + chat.getId()));
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         setLocationRelativeTo(null);
         
-        // Add window closing handler to leave chat on close
+        
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
@@ -57,7 +57,7 @@ public class ChatWindow extends JFrame {
         initComponents();
         layoutComponents();
         
-        // Register with the server
+        
         try {
             if (chatServer != null) {
                 chatServer.registerClient(chatClient, currentUser.getNickname());
@@ -76,14 +76,14 @@ public class ChatWindow extends JFrame {
     }
     
     public ChatWindow() {
-        // Initialize required fields with null values
+        
         this.currentUser = null;
         this.chatServer = null;
         this.chatClient = null;
         this.userIcon = null;
         
-        // Don't perform any UI initialization or server connection
-        // This constructor is only for subclassing
+        
+        
     }
     
     private void initComponents() {
@@ -111,10 +111,10 @@ public class ChatWindow extends JFrame {
     private void layoutComponents() {
         setLayout(new BorderLayout());
         
-        // Chat area in center
+        
         add(chatScrollPane, BorderLayout.CENTER);
         
-        // Message input area at bottom
+        
         JPanel bottomPanel = new JPanel(new BorderLayout());
         JPanel messagePanel = new JPanel(new BorderLayout());
         messagePanel.add(messageField, BorderLayout.CENTER);
@@ -123,7 +123,7 @@ public class ChatWindow extends JFrame {
         bottomPanel.add(statusLabel, BorderLayout.SOUTH);
         add(bottomPanel, BorderLayout.SOUTH);
         
-        // User list on right
+        
         JScrollPane userScrollPane = new JScrollPane(userListPanel);
         userScrollPane.setPreferredSize(new Dimension(200, getHeight()));
         add(userScrollPane, BorderLayout.EAST);
@@ -137,7 +137,7 @@ public class ChatWindow extends JFrame {
             if (chatServer != null) {
                 chatServer.sendMessage(message, currentUser.getNickname());
                 
-                // If user types "Bye", close the window
+                
                 if (message.equalsIgnoreCase("Bye")) {
                     exitChat();
                 }
@@ -165,7 +165,7 @@ public class ChatWindow extends JFrame {
             JOptionPane.showMessageDialog(this, 
                     "Error leaving chat: " + ex.getMessage(), 
                     "Error", JOptionPane.ERROR_MESSAGE);
-            // Force dispose even if there's an error
+            
             dispose();
         }
     }
@@ -173,7 +173,7 @@ public class ChatWindow extends JFrame {
     public void appendToChatArea(String message) {
         if (chatArea != null) {
             chatArea.append(message + "\n");
-            // Auto-scroll to bottom
+            
             chatArea.setCaretPosition(chatArea.getDocument().getLength());
         }
     }
@@ -198,30 +198,30 @@ public class ChatWindow extends JFrame {
         return sdf.format(new Date());
     }
     
-    // Create a simple user icon
+    
     private Image createUserIcon(int size) {
         BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2d = image.createGraphics();
         
-        // Set rendering hints for better quality
+        
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         
-        // Draw user icon (simple avatar)
-        g2d.setColor(new Color(100, 149, 237)); // Cornflower blue
+        
+        g2d.setColor(new Color(100, 149, 237)); 
         g2d.fillOval(0, 0, size, size);
         
-        // Draw simplified face
+        
         int headSize = (int)(size * 0.6);
         int headY = (int)(size * 0.15);
-        g2d.setColor(new Color(255, 222, 173)); // Navajo white
+        g2d.setColor(new Color(255, 222, 173)); 
         g2d.fillOval((size - headSize) / 2, headY, headSize, headSize);
         
-        // Draw body
+        
         int bodyWidth = (int)(size * 0.6);
         int bodyHeight = (int)(size * 0.4);
         int bodyX = (size - bodyWidth) / 2;
         int bodyY = (int)(size * 0.7);
-        g2d.setColor(new Color(255, 222, 173)); // Navajo white
+        g2d.setColor(new Color(255, 222, 173)); 
         g2d.fillRect(bodyX, bodyY, bodyWidth, bodyHeight);
         
         g2d.dispose();

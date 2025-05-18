@@ -23,12 +23,12 @@ public class ChatPanel extends JPanel {
         
         setLayout(new BorderLayout());
         
-        // Messages panel with vertical BoxLayout
+        
         messagesPanel = new JPanel();
         messagesPanel.setLayout(new BoxLayout(messagesPanel, BoxLayout.Y_AXIS));
         messagesPanel.setBackground(Color.WHITE);
         
-        // Add to scroll pane
+        
         JScrollPane scrollPane = new JScrollPane(messagesPanel);
         scrollPane.setBorder(null);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
@@ -37,24 +37,24 @@ public class ChatPanel extends JPanel {
     }
     
     public void addMessage(String message) {
-        // Check if it's a system message
+        
         if (message.contains(" joined the chat at: ") || 
             message.contains(" left the chat at: ") ||
             message.contains("Chat started at: ") ||
             message.contains("Chat ended at: ")) {
-            // System message - display differently
+            
             addSystemMessage(message);
         } else {
-            // Try to parse as a user message (format: "username: message")
+            
             int colonPos = message.indexOf(": ");
             if (colonPos > 0) {
                 String sender = message.substring(0, colonPos);
                 String content = message.substring(colonPos + 2);
                 
-                // Extract timestamp if present
+                
                 Date timestamp = new Date();
                 try {
-                    // Check for timestamp at the end of message (format may vary)
+                    
                     int timestampStartPos = content.lastIndexOf(" [");
                     if (timestampStartPos > 0 && content.endsWith("]")) {
                         String timestampStr = content.substring(timestampStartPos + 2, content.length() - 1);
@@ -62,34 +62,34 @@ public class ChatPanel extends JPanel {
                         content = content.substring(0, timestampStartPos);
                     }
                 } catch (ParseException e) {
-                    // Use current time if parsing fails
+                    
                 }
                 
-                // Check if we need to add a date header
+                
                 addDateHeaderIfNeeded(timestamp);
                 
-                // Create user object (simplified, you might want to look up the actual user)
+                
                 User senderUser = new User();
                 senderUser.setNickname(sender);
-                // Try to find full user object if possible
+                
                 try {
                     User fullUser = userDAO.findByUsernameOrNickname(sender);
                     if (fullUser != null) {
                         senderUser = fullUser;
                     }
                 } catch (Exception e) {
-                    // Use the basic user if lookup fails
+                    
                 }
                 
-                // Add the message
+                
                 addUserMessage(senderUser, content, sender.equals(currentUser.getNickname()), timestamp);
             } else {
-                // Fallback for messages that don't match expected format
+                
                 addSystemMessage(message);
             }
         }
         
-        // Scroll to bottom
+        
         SwingUtilities.invokeLater(() -> {
             JScrollPane scrollPane = (JScrollPane) getComponent(0);
             JScrollBar verticalBar = scrollPane.getVerticalScrollBar();
@@ -98,10 +98,10 @@ public class ChatPanel extends JPanel {
     }
     
     private void addSystemMessage(String message) {
-        // Format the system message to be cleaner
+        
         String formattedMessage = message;
         
-        // Check for join/leave messages
+        
         if (message.contains(" joined the chat at: ")) {
             int idx = message.indexOf(" joined the chat at: ");
             String username = message.substring(0, idx);
@@ -124,9 +124,9 @@ public class ChatPanel extends JPanel {
     }
     
     private void addUserMessage(User sender, String content, boolean isCurrentUser, Date timestamp) {
-        // If we only have the username but not the full user object
+        
         if (sender != null && sender.getId() == 0 && !isCurrentUser) {
-            // Try to fetch the user from the database
+            
             String nickname = sender.getNickname();
             try {
                 User fullUser = userDAO.findByUsernameOrNickname(nickname);
@@ -155,7 +155,7 @@ public class ChatPanel extends JPanel {
         Date messageDay = messageCal.getTime();
         
         if (lastDateHeader == null || !messageDay.equals(lastDateHeader)) {
-            // Add date header
+            
             JLabel dateLabel = new JLabel(DATE_HEADER_FORMAT.format(messageDate));
             dateLabel.setForeground(Color.GRAY);
             dateLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));

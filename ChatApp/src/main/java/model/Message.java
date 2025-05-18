@@ -31,7 +31,7 @@ public class Message {
         this.read = false;
     }
     
-    // Getters and setters
+    
     public int getId() {
         return id;
     }

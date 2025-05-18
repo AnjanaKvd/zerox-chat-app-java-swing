@@ -22,7 +22,7 @@ public class ChatLogViewer extends JFrame {
         JScrollPane scrollPane = new JScrollPane(logArea);
         add(scrollPane, BorderLayout.CENTER);
         
-        // Add a close button at the bottom
+        
         JButton closeButton = new JButton("Close");
         closeButton.addActionListener(e -> dispose());
         
@@ -30,7 +30,7 @@ public class ChatLogViewer extends JFrame {
         buttonPanel.add(closeButton);
         add(buttonPanel, BorderLayout.SOUTH);
         
-        // Load the log file content
+        
         loadLogFile(logFileName);
         
         setVisible(true);
@@ -53,7 +53,7 @@ public class ChatLogViewer extends JFrame {
             }
             
             logArea.setText(content.toString());
-            logArea.setCaretPosition(0); // Scroll to top
+            logArea.setCaretPosition(0); 
             
         } catch (IOException e) {
             logArea.setText("Error reading log file: " + e.getMessage());

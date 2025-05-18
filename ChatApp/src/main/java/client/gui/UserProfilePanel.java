@@ -51,7 +51,7 @@ public class UserProfilePanel extends JPanel {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(5, 5, 5, 5);
         
-        // Profile Picture
+        
         profilePicPath = user.getProfilePic();
         profilePicLabel = new JLabel();
         profilePicLabel.setPreferredSize(new Dimension(100, 100));
@@ -69,27 +69,27 @@ public class UserProfilePanel extends JPanel {
         JButton chooseImageButton = new JButton("Choose Image");
         chooseImageButton.addActionListener(e -> chooseProfilePicture());
         
-        // Username field
+        
         JLabel usernameLabel = new JLabel("Username:");
         usernameField = new JTextField(user.getUsername(), 20);
         
-        // Nickname field
+        
         JLabel nicknameLabel = new JLabel("Nickname:");
         nicknameField = new JTextField(user.getNickname(), 20);
         
-        // Password fields
+        
         JLabel passwordLabel = new JLabel("New Password:");
         passwordField = new JPasswordField(20);
         
         JLabel confirmLabel = new JLabel("Confirm Password:");
         confirmPasswordField = new JPasswordField(20);
         
-        // Email field (read-only)
+        
         JLabel emailLabel = new JLabel("Email:");
         JTextField emailField = new JTextField(user.getEmail(), 20);
         emailField.setEditable(false);
         
-        // Layout components
+        
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 2;
@@ -138,21 +138,21 @@ public class UserProfilePanel extends JPanel {
             File selectedFile = fileChooser.getSelectedFile();
             
             try {
-                // Create resources directory if it doesn't exist
+                
                 File resourcesDir = new File("profile_pics");
                 if (!resourcesDir.exists()) {
                     resourcesDir.mkdirs();
                 }
                 
-                // Copy the file to resources with unique name
+                
                 String fileName = System.currentTimeMillis() + "_" + selectedFile.getName();
                 Path targetPath = Paths.get(resourcesDir.getAbsolutePath(), fileName);
                 Files.copy(selectedFile.toPath(), targetPath, StandardCopyOption.REPLACE_EXISTING);
                 
-                // Update profile pic path
+                
                 profilePicPath = targetPath.toString();
                 
-                // Display the image
+                
                 ImageIcon icon = new ImageIcon(profilePicPath);
                 Image img = icon.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH);
                 profilePicLabel.setIcon(new ImageIcon(img));
@@ -167,7 +167,7 @@ public class UserProfilePanel extends JPanel {
     }
     
     private void saveProfile() {
-        // Validate fields
+        
         String username = usernameField.getText().trim();
         String nickname = nicknameField.getText().trim();
         String password = new String(passwordField.getPassword());
@@ -183,7 +183,7 @@ public class UserProfilePanel extends JPanel {
             return;
         }
         
-        // Only validate password if user is trying to change it
+        
         if (!password.isEmpty()) {
             if (!password.equals(confirmPassword)) {
                 JOptionPane.showMessageDialog(this, "Passwords do not match", "Validation Error", JOptionPane.ERROR_MESSAGE);
@@ -191,17 +191,17 @@ public class UserProfilePanel extends JPanel {
             }
         }
         
-        // Update user object
+        
         user.setUsername(username);
         user.setNickname(nickname);
         if (!password.isEmpty()) {
-            user.setPassword(password); // In a real app, this should be hashed
+            user.setPassword(password); 
         }
         if (profilePicPath != null) {
             user.setProfilePic(profilePicPath);
         }
         
-        // Save to database
+        
         try {
             userDAO.updateUser(user);
             JOptionPane.showMessageDialog(this, "Profile updated successfully", "Success", JOptionPane.INFORMATION_MESSAGE);

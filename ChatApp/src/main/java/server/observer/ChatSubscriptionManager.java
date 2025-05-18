@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 public class ChatSubscriptionManager {
-    private final Map<Integer, List<User>> chatSubscriptions; // chatId -> subscribers
+    private final Map<Integer, List<User>> chatSubscriptions; 
     
     public ChatSubscriptionManager() {
         chatSubscriptions = new HashMap<>();
@@ -37,13 +37,13 @@ public class ChatSubscriptionManager {
     public void notifySubscribedUsers(int chatId, String message, Map<String, ChatClient> activeClients) {
         List<User> subscribers = getSubscribedUsers(chatId);
         for (User user : subscribers) {
-            // Check if user is currently online and has an active client
+            
             ChatClient client = activeClients.get(user.getUsername());
             if (client != null) {
                 try {
                     client.receiveMessage(message);
                 } catch (RemoteException e) {
-                    // Handle exception, perhaps by removing the client
+                    
                     activeClients.remove(user.getUsername());
                 }
             }
@@ -53,13 +53,13 @@ public class ChatSubscriptionManager {
     public void notifyChatStarted(int chatId, String time, Map<String, ChatClient> activeClients) {
         List<User> subscribers = getSubscribedUsers(chatId);
         for (User user : subscribers) {
-            // Check if user is currently online and has an active client
+            
             ChatClient client = activeClients.get(user.getUsername());
             if (client != null) {
                 try {
                     client.notifyChatStarted(time);
                 } catch (RemoteException e) {
-                    // Handle exception, perhaps by removing the client
+                    
                     activeClients.remove(user.getUsername());
                 }
             }

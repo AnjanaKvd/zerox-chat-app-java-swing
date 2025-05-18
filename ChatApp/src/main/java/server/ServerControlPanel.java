@@ -31,18 +31,18 @@ public class ServerControlPanel extends JFrame {
     }
     
     private void initComponents() {
-        // Status panel
+        
         statusLabel = new JLabel("Server Status: RUNNING");
         statusLabel.setForeground(Color.GREEN);
         statusLabel.setFont(new Font("Arial", Font.BOLD, 14));
         statusLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
-        // Log area
+        
         logArea = new JTextArea();
         logArea.setEditable(false);
         JScrollPane scrollPane = new JScrollPane(logArea);
         
-        // Buttons panel
+        
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         shutdownButton = new JButton("Shutdown Server");
         shutdownButton.setBackground(Color.RED);
@@ -50,7 +50,7 @@ public class ServerControlPanel extends JFrame {
         shutdownButton.addActionListener(e -> confirmShutdown());
         buttonPanel.add(shutdownButton);
         
-        // Layout
+        
         setLayout(new BorderLayout());
         add(statusLabel, BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
@@ -61,7 +61,7 @@ public class ServerControlPanel extends JFrame {
         SwingUtilities.invokeLater(() -> {
             String timestamp = timeFormat.format(new Date());
             logArea.append("[" + timestamp + "] " + message + "\n");
-            // Auto-scroll to bottom
+            
             logArea.setCaretPosition(logArea.getDocument().getLength());
         });
     }
@@ -83,7 +83,7 @@ public class ServerControlPanel extends JFrame {
         statusLabel.setText("Server Status: SHUTTING DOWN");
         statusLabel.setForeground(Color.RED);
         
-        // Give time for the log message to appear
+        
         Timer timer = new Timer(1000, e -> {
             System.out.println("Server shutdown completed");
             System.exit(0);
